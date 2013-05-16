@@ -1,0 +1,33 @@
+# Current Supported Elements
+# playerdetector.Player_Detector((topleftx,toplefty,width,height), (slowdownratex,slowdownratey), moveImg/spaceImg)
+# pymunk.Segment(self.static_body, (startx,starty), (endx,endy), widthofline)
+# elevator.Elevator(40, 1, (posx,posy), (width,10), height, extraheadroom, (detectorpaddingx,detectorpaddingy), self.space)
+#
+#playerdetector.Player_Detector((0,0,400,100), (16,16), moveImg)
+#playerdetector.Player_Detector((600,100,400,100), (16,16), spaceImg)
+#elevator.Elevator(40, 1, (902,200), (200,10), 80, 150, (0,50), self.space)
+#elevator.Elevator(40, 1, (1500,400), (200,10), 200, 50, (0,0), self.space)
+
+# Boundries
+pymunk.Segment(self.static_body, (0,0), (self.mapWidth,0), 4)
+pymunk.Segment(self.static_body, (0,self.mapHeight), (self.mapWidth,self.mapHeight), 4)
+pymunk.Segment(self.static_body, (0,0), (0,self.mapHeight), 4)
+pymunk.Segment(self.static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight), 4)
+# Level
+
+pymunk.Segment(self.static_body, (0,180), (300,180), 2)
+pymunk.Segment(self.static_body, (300,180), (414,160), 2)
+pymunk.Segment(self.static_body, (414,160), (502,130), 2)
+pymunk.Segment(self.static_body, (502,130), (677,38), 2)
+pymunk.Segment(self.static_body, (677,38), (780,9), 2)
+pymunk.Segment(self.static_body, (780,9), (884,0), 2)
+
+pymunk.Segment(self.static_body, (1100,0), (1165,9), 2)
+pymunk.Segment(self.static_body, (1165,9), (1250,38), 2)
+pymunk.Segment(self.static_body, (1250,38), (1280,58), 2)
+pymunk.Segment(self.static_body, (1280,58), (1338,64), 2)
+pymunk.Segment(self.static_body, (1338,64), (1398,58), 2)
+pymunk.Segment(self.static_body, (1398,58), (1432,40), 2)
+pymunk.Segment(self.static_body, (1398,58), (1432,40), 2)
+pymunk.Segment(self.static_body, (1432,40), (1520,9), 2)
+pymunk.Segment(self.static_body, (1520,9), (1582,0), 2)
