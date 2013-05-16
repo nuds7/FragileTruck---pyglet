@@ -85,8 +85,6 @@ class FirstWindow(pyglet.window.Window):
 			self.player.left_wheel_b.angular_velocity    	*= .95 # fake friction for wheel 
 			self.player.right_wheel_b.angular_velocity   	*= .95
 
-		
-
 	def on_mouse_press(self, x, y, button, modifiers):
 		pass
 		
@@ -100,14 +98,11 @@ class FirstWindow(pyglet.window.Window):
 		if scroll_y >= 1.0:
 			self.scroll_zoom -= 20
 		
-		
-		
 	def update(self, dt):
 		self.space.step(0.015)
 		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
 		self.camera.update(self.player.car_body.position, (self.player_velocity/2 + 250+self.scroll_zoom), 0, (20,10))
 		self.level.update((self.camera.newPositionX,self.camera.newPositionY))
-
 		
 	def on_draw(self):
 		self.clear()
@@ -118,7 +113,6 @@ class FirstWindow(pyglet.window.Window):
 		self.jelly.draw()
 		self.jelly2.draw()
 		self.jelly3.draw()
-		
 
 		self.camera.hud_mode() # draw hud after this
 		self.label.draw()
