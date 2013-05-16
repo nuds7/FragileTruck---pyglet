@@ -98,15 +98,17 @@ class Player:
         self.space.add(self.right_wheel_b, self.right_wheel_shape)
 
         # Springs and Other Constraints
-        self.rest_ln        = 20 # 20
+        self.rest_ln        = 25 # 20
+        self.lift           = 25
         self.stiff          = 100 # 90
-        self.damp           = .2 # .8
+        self.damp           = .4 # .8
         self.wheel_base     = 34
-        self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.wheel_base, -10), (0,0), self.rest_ln, self.stiff, self.damp)
-        self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_b, (self.wheel_base, -10), (0,0), self.rest_ln, self.stiff, self.damp)
+        
+        self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
+        self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_b, (self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
 
-        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -14), (-self.wheel_base, -30), (0,0))
-        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -14), (self.wheel_base, -30), (0,0))
+        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -10), (-self.wheel_base, -self.lift), (0,0))
+        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -10), (self.wheel_base, -self.lift), (0,0))
 
         ''' original setup
         self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.body_size[0]//2, -10), (0,0), self.rest_ln, self.stiff, self.damp)
