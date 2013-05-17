@@ -9,10 +9,10 @@ class Jelly:
         self.group = group
         self.bounciness = bounciness
         self.angle = 0
-        self.angle_to_add = .21
+        self.angle_to_add = .45
 
-        self.mass               = 0.02
-        self.center_radius      = 3
+        self.mass               = .05
+        self.center_radius      = radius
         self.position           = position
         
         self.inertia            = pymunk.moment_for_circle(self.mass, 0, self.radius)
@@ -25,9 +25,9 @@ class Jelly:
         
         self.list = []
 
-        for i in range(30):
-            self.part_mass          = .002
-            self.part_radius        = 8
+        for i in range(14):
+            self.part_mass          = .05
+            self.part_radius        = 5
             
             self.position_x         = self.radius*cos(self.angle) + self.body.position[0]
             self.position_y         = self.radius*sin(self.angle) + self.body.position[1]
@@ -44,13 +44,13 @@ class Jelly:
             self.space.add(self.part_body, self.part_shape)
             self.list.append(self.part_body)
 
-            self.rest_ln = self.radius
+            self.rest_ln = -1
             self.stiffness = self.bounciness # 10 for really bouncy, 1 for squishy as shit
-            self.damp = .006
-            self.spring = pymunk.constraint.DampedSpring(self.body, self.part_body, (0,0), (0,0), self.rest_ln, self.stiffness, self.damp)
-            self.slide = pymunk.constraint.GrooveJoint(self.body, self.part_body, (0,0), (self.position_x-self.body.position[0],self.position_y-self.body.position[1]), (0,0))
+            self.damp = .4
+            self.spring = pymunk.constraint.DampedSpring(self.body, self.part_body, (self.position_x-self.body.position[0],self.position_y-self.body.position[1]), (0,0), self.rest_ln, self.stiffness, self.damp)
+            #self.slide = pymunk.constraint.GrooveJoint(self.body, self.part_body, (0,0), (self.position_x-self.body.position[0],self.position_y-self.body.position[1]), (0,0))
 
-            self.space.add(self.spring, self.slide)
+            self.space.add(self.spring)
 
 
     def draw(self):
@@ -67,7 +67,7 @@ class Jelly:
             self.point_list.append(self.padded_x)
             self.point_list.append(self.padded_y)
             self.padding_angle += self.angle_to_add
-            self.part_body.angular_velocity *= 0.0
+            self.part_body.angular_velocity *= 0.01
 
         self.point_list_length = len(self.point_list)//2
 

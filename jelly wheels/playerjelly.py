@@ -3,7 +3,9 @@ import pyglet
 import pymunk
 from pymunk import Vec2d
 import math
-from math import sin,cos,atan2,pi    
+from math import sin,cos,atan2,pi
+
+import jellywheels
 
         
 
@@ -59,19 +61,19 @@ class Player:
         self.body2_mass         = 1
         self.body2_size         = (15,35)
         self.body2_inertia      = pymunk.moment_for_box(self.body2_mass, self.body2_size[0], self.body2_size[1])
-        self.body2_poly         = pymunk.Poly(self.car_body, ((-7,20),(7,20),(0,0)))
+        self.body2_poly         = pymunk.Poly(self.car_body, ((-7,0),(-7,20),(7,20),(10,0)))
         self.body2_poly.friction= 0.5
         self.body2_poly.group   = 1  # so that the wheels and the body do not collide with eachother
 
         self.space.add(self.car_body, self.body_poly, self.body2_poly)
-
+        
         # left wheel
         self.left_wheel_mass            = .3
         self.left_wheel_radius          = 13
         self.left_wheel_position_x      = self.body_position[0]-(self.body_size[0]//2) + self.left_wheel_radius
         self.left_wheel_position_y      = self.body_position[1] - self.body_size[1]
         self.left_wheel_position        = self.left_wheel_position_x, self.left_wheel_position_y
-        
+        '''
         self.inertiaL                   = pymunk.moment_for_circle(self.left_wheel_mass, 0, self.left_wheel_radius)
         self.left_wheel_b               = pymunk.Body(self.left_wheel_mass, self.inertiaL)
         self.left_wheel_b.position      = self.left_wheel_position
@@ -80,14 +82,15 @@ class Player:
         self.left_wheel_shape.group     = 1  # so that the wheels and the body do not collide with eachother
         
         self.space.add(self.left_wheel_b, self.left_wheel_shape)
-
+        '''
         # right wheel
+
         self.right_wheel_mass           = .3
         self.right_wheel_radius         = 13
         self.right_wheel_position_x     = self.body_position[0]+(self.body_size[0]//2) - self.right_wheel_radius
         self.right_wheel_position_y     = self.body_position[1] - self.body_size[1]
         self.right_wheel_position       = self.right_wheel_position_x, self.right_wheel_position_y
-        
+        '''
         self.inertiaR                   = pymunk.moment_for_circle(self.right_wheel_mass, 0, self.right_wheel_radius)
         self.right_wheel_b              = pymunk.Body(self.right_wheel_mass, self.inertiaR)
         self.right_wheel_b.position     = self.right_wheel_position
@@ -96,6 +99,11 @@ class Player:
         self.right_wheel_shape.group    = 1  # so that the wheels and the body do not collide with eachother
         
         self.space.add(self.right_wheel_b, self.right_wheel_shape)
+        '''
+
+        self.trans_black = 25,25,25,200
+        self.left_wheel_jelly = jellywheels.Jelly(self.space, 15, (self.left_wheel_position), 30, 1, self.trans_black)
+        self.right_wheel_jelly = jellywheels.Jelly(self.space, 15, (self.right_wheel_position), 30, 1, self.trans_black)
 
         # Springs and Other Constraints
         self.rest_ln        = 25 # 20
@@ -104,11 +112,11 @@ class Player:
         self.damp           = .4 # .8
         self.wheel_base     = 34
         
-        self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
-        self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_b, (self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
+        self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_jelly.body, (-self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
+        self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_jelly.body, (self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
 
-        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -10), (-self.wheel_base, -self.lift), (0,0))
-        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -10), (self.wheel_base, -self.lift), (0,0))
+        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_jelly.body, (-self.wheel_base, -10), (-self.wheel_base, -self.lift), (0,0))
+        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_jelly.body, (self.wheel_base, -10), (self.wheel_base, -self.lift), (0,0))
 
         ''' original setup
         self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.body_size[0]//2, -10), (0,0), self.rest_ln, self.stiff, self.damp)
@@ -197,12 +205,16 @@ class Player:
                             ('v2f', (self.vertlist)),
                             )
         '''
-
+        '''
         self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
         self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
         
         pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
                             ('v2f', (self.antenna_body.position)))
+        '''
+
+        self.left_wheel_jelly.draw()
+        self.right_wheel_jelly.draw()
         
         self.antenna_pos_x = 24*cos(self.car_body.angle) + self.car_body.position[0]
         self.antenna_pos_y = 24*sin(self.car_body.angle) + self.car_body.position[1]

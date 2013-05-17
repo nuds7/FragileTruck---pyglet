@@ -12,7 +12,7 @@ import player
 import levelassembler
 import box
 import jelly
-import jellytwo
+import jellywheels
 
 pyglet.resource.path = ['resources','resources/images']
 pyglet.resource.reindex()
@@ -43,24 +43,15 @@ class FirstWindow(pyglet.window.Window):
 		#self.box = box.CreatePymunkBox(.1, (50,20), 0.5, (50,300), self.space)
 		self.trans_blue = 125,175,250,200
 		self.trans_green = 125,250,175,200
-		self.trans_red = 255,125,125,200
-		self.trans_black = 25,25,25,200
-		
+		self.trans_red = 255,125,175,200
 		self.jelly = jelly.Jelly(self.space, 30, (275,350), 2, 3, self.trans_blue)
 		self.jelly2 = jelly.Jelly(self.space, 60, (150,480), 6, 4, self.trans_green)
-		self.jelly3 = jelly.Jelly(self.space, 20, (170,580), 8, 5, self.trans_red)
-
-		self.jellytypetwo = jellytwo.Jelly(self.space, 20, (120,680), 12, 6, self.trans_black)
+		self.jelly3 = jelly.Jelly(self.space, 20, (170,580), 12, 5, self.trans_red)
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
-
-		self.scroll_zoom = 0
-		self.polygon_points = []
-		self.polygon_points_length = 0
-
 		self.keys_held = [] # maintain a list of keys held
-
+		self.scroll_zoom = 0
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)
 	def on_key_release(self, symbol, modifiers):
@@ -77,30 +68,30 @@ class FirstWindow(pyglet.window.Window):
 		# Movement
 		if pyglet.window.key.LEFT in self.keys_held:
 			if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-				self.player.left_wheel_b.angular_velocity += 7
+				self.player.left_wheel_jelly.body.angular_velocity += 7
 			else: # Regular
-				self.player.left_wheel_b.angular_velocity += 3
+				self.player.left_wheel_jelly.body.angular_velocity += 3
 
 		if pyglet.window.key.RIGHT in self.keys_held:
+			
 			if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-				self.player.left_wheel_b.angular_velocity -= 7
+				self.player.left_wheel_jelly.body.angular_velocity -= 7
 			else: # Regular
-				self.player.left_wheel_b.angular_velocity -= 3
+				self.player.left_wheel_jelly.body.angular_velocity -= 3
+			
 
 		if pyglet.window.key.DOWN in self.keys_held:
-			self.player.left_wheel_b.angular_velocity 		*= 0.49 # brakes
-			self.player.right_wheel_b.angular_velocity 		*= 0.49
-			self.player.car_body.angular_velocity 			*= 0.49
+			self.player.left_wheel_jelly.body.angular_velocity 		*= 0.49 # brakes
+			self.player.right_wheel_jelly.body.angular_velocity 	*= 0.49
+			self.player.car_body.angular_velocity 					*= 0.49
+		
 		if not pyglet.window.key.LEFT in self.keys_held and not pyglet.window.key.RIGHT in self.keys_held:
-			self.player.left_wheel_b.angular_velocity    	*= .95 # fake friction for wheel 
-			self.player.right_wheel_b.angular_velocity   	*= .95
+			self.player.left_wheel_jelly.body.angular_velocity    	*= .95 # fake friction for wheel 
+			self.player.right_wheel_jelly.body.angular_velocity   	*= .95
+		
 
 	def on_mouse_press(self, x, y, button, modifiers):
-		self.polygon_point_x = x
-		self.polygon_point_y = y
-		self.polygon_points.append(x)
-		self.polygon_points.append(y)
-		self.polygon_points_length = len(self.polygon_points)//2
+		pass
 		
 	def on_mouse_release(self, x, y, button, modifiers):
 		pass
@@ -127,16 +118,10 @@ class FirstWindow(pyglet.window.Window):
 		self.jelly.draw()
 		self.jelly2.draw()
 		self.jelly3.draw()
-		self.jellytypetwo.draw()
 
 		self.camera.hud_mode() # draw hud after this
 		self.label.draw()
 		self.fps_display.draw()
-		pyglet.graphics.draw(self.polygon_points_length, pyglet.gl.GL_LINE_LOOP,
-                            ('v2f', self.polygon_points),
-                            ('c4B', (255,255,255,140)*self.polygon_points_length)
-                            )
-		
 
 if __name__ == '__main__':
 	window = FirstWindow(1280,720)
