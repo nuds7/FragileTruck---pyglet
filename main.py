@@ -46,11 +46,12 @@ class FirstWindow(pyglet.window.Window):
 		self.trans_red = 255,125,125,200
 		self.trans_black = 25,25,25,200
 		
-		self.jelly = jelly.Jelly(self.space, 30, (275,350), 2, 3, self.trans_blue)
-		self.jelly2 = jelly.Jelly(self.space, 60, (150,480), 6, 4, self.trans_green)
-		self.jelly3 = jelly.Jelly(self.space, 20, (170,580), 8, 5, self.trans_red)
+		self.jelly = jelly.Jelly(self.space, 30, (1575,350), 2, 3, self.trans_blue)
+		self.jelly2 = jelly.Jelly(self.space, 60, (1550,480), 6, 4, self.trans_green)
+		self.jelly3 = jelly.Jelly(self.space, 20, (1570,580), 8, 5, self.trans_red)
 
-		self.jellytypetwo = jellytwo.Jelly(self.space, 20, (120,680), 12, 6, self.trans_black)
+		#self.jellytypetwo = jellytwo.Jelly(self.space, 30, (220,580), 8, 6, self.trans_black)
+		self.jellypoly = jellytwo.PolygonJelly(self.space, 18)
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
@@ -127,7 +128,8 @@ class FirstWindow(pyglet.window.Window):
 		self.jelly.draw()
 		self.jelly2.draw()
 		self.jelly3.draw()
-		self.jellytypetwo.draw()
+		#self.jellytypetwo.draw()
+		self.jellypoly.draw()
 
 		self.camera.hud_mode() # draw hud after this
 		self.label.draw()

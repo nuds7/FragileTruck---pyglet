@@ -1,5 +1,6 @@
 from math import sin,cos
 import pymunk
+from pymunk import Vec2d
 import pyglet
 class Jelly:
     def __init__ (self, space, radius, position, bounciness, group, color):
@@ -87,4 +88,70 @@ class Jelly:
                             ('c3B', (255,255,255)*self.point_list_length)
                             )
 
+class PolygonJelly:
+    def __init__ (self, space, stiffness):
+        self.space = space
+        self.stiffness = stiffness
+
+        self.list = []
+
+        self.mass               = .02
+        self.radius             = 5
         
+        self.inertia            = pymunk.moment_for_circle(self.mass, 0, self.radius)
+
+        self.body1               = pymunk.Body(self.mass, self.inertia)
+        self.body1.position      = 300,310
+        self.shape1              = pymunk.Circle(self.body1, self.radius)
+        self.shape1.friction     = .2
+        self.shape1.group        = 7
+
+        self.space.add(self.body1, self.shape1)
+        self.list.append(self.body1)
+
+        self.body2               = pymunk.Body(self.mass, self.inertia)
+        self.body2.position      = 270,270
+        self.shape2              = pymunk.Circle(self.body2, self.radius)
+        self.shape2.friction     = .2
+        self.shape2.group        = 7
+
+        self.space.add(self.body2, self.shape2)
+        self.list.append(self.body2)
+
+        self.body3               = pymunk.Body(self.mass, self.inertia)
+        self.body3.position      = 330,270
+        self.shape3              = pymunk.Circle(self.body3, self.radius)
+        self.shape3.friction     = .2
+        self.shape3.group        = 7
+
+        self.space.add(self.body3, self.shape3)
+        self.list.append(self.body3)
+
+        self.list_item = 0
+
+        for body in self.list[1:]:
+            self.spring = pymunk.constraint.DampedSpring(body, self.list[self.list_item], (0,0), (0,0), 30, self.stiffness, .1)
+            self.space.add(self.spring)
+            self.list_item += 1
+
+        self.spring = pymunk.constraint.DampedSpring(self.list[0], self.list[-1], (0,0), (0,0), 30, self.stiffness, .1)
+        self.space.add(self.spring)
+                
+
+    def draw(self):
+        self.point_list = []
+        for body in self.list:
+            self.point_list.append(body.position.x)
+            self.point_list.append(body.position.y)
+
+        self.point_list_length = len(self.point_list)//2
+
+        pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_POLYGON,
+                            ('v2f', self.point_list),
+                            ('c4B', (124,124,250,140)*self.point_list_length)
+                            )
+
+        pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_LINE_LOOP,
+                            ('v2f', self.point_list),
+                            ('c4B', (0,0,0,140)*self.point_list_length)
+                            )
