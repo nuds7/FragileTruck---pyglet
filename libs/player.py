@@ -52,19 +52,21 @@ class Player:
         self.body_inertia       = pymunk.moment_for_box(self.body_mass, self.body_size[0], self.body_size[1])
         self.car_body           = pymunk.Body(self.body_mass, self.body_inertia)
         self.car_body.position  = self.body_position
-        self.body_poly          = pymunk.Poly.create_box(self.car_body, self.body_size)
-        self.body_poly.friction = 0.5
-        self.body_poly.group    = 1  # so that the wheels and the body do not collide with eachother
-        
-        self.body2_position     = (self.body_position[0],self.body_position[1] + 20)
-        self.body2_mass         = 1
-        self.body2_size         = (15,35)
-        self.body2_inertia      = pymunk.moment_for_box(self.body2_mass, self.body2_size[0], self.body2_size[1])
-        self.body2_poly         = pymunk.Poly(self.car_body, ((-7,20),(7,20),(0,0)))
-        self.body2_poly.friction= 0.5
-        self.body2_poly.group   = 1  # so that the wheels and the body do not collide with eachother
-
-        self.space.add(self.car_body, self.body_poly, self.body2_poly)
+        #self.body_poly          = pymunk.Poly.create_box(self.car_body, self.body_size)
+        self.space.add(self.car_body)
+        self.origin = (-9,2)
+        self.parts =    [((self.origin),(50,-8),(49,7),(24,8)),
+                        ((self.origin),(24,8),(10,20),(-7,20)),
+                        ((self.origin),(-52,2),(-56,-8),(50,-8)),
+                        ((-56,-8),(-56,7),(-52,10),(-52,2)),
+                        ]
+        self.shape_list = []
+        for part in self.parts:
+            self.part = pymunk.Poly(self.car_body, part)
+            self.part.friction = 0.5
+            self.part.group    = 1  # so that the wheels and the body do not collide with eachother
+            self.space.add(self.part)
+            self.shape_list.append(self.part)
 
         # left wheel
         self.left_wheel_mass            = .3
@@ -111,13 +113,6 @@ class Player:
         self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -10), (-self.wheel_base, -self.lift), (0,0))
         self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -10), (self.wheel_base, -self.lift), (0,0))
 
-        ''' original setup
-        self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.body_size[0]//2, -10), (0,0), self.rest_ln, self.stiff, self.damp)
-        self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_b, (self.body_size[0]//2, -10), (0,0), self.rest_ln, self.stiff, self.damp)
-
-        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.body_size[0]//2, -20), (-self.body_size[0]//2, -30), (0,0))
-        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.body_size[0]//2, -20), (self.body_size[0]//2, -30), (0,0))
-        '''
         self.space.add(self.left_spring, self.right_spring, self.left_groove, self.right_groove)
 
         self.antenna_position       = (self.body_position[0] + 28, self.body_position[1] + 30)
@@ -177,7 +172,7 @@ class Player:
         self.antenna_body.angular_velocity = 0
         self.antenna_body.angle = 0
 
-    def pyglet_draw(self, batch):
+    def draw(self, batch):
         self.batch = batch
 
         if self.car_body.position[1] < 0:
@@ -193,36 +188,51 @@ class Player:
         self.sprite_x = 5*cos(self.car_body.angle-5) + self.car_body.position[0]
         self.sprite_y = 5*sin(self.car_body.angle-5) + self.car_body.position[1]
         self.player_sprite.set_position(self.sprite_x, self.sprite_y)
+
         self.player_sprite.rotation =  math.degrees(-self.car_body.angle)
         self.player_sprite.draw()
-        
-        self.box_verts = self.body_poly.get_points()
-        self.vertlist = []
-        
-        for v in self.box_verts: # transforms a list of tuple coords (Vec2d(x,y),Vec2d(x,y), etc) 
-            self.vertlist.append(v.x) # to a list that pyglet can draw to [x,y, x,y, etc]
-            self.vertlist.append(v.y)
-         # vehicle bb
-        '''
-        pyglet.graphics.draw(4, pyglet.gl.GL_LINE_LOOP,
-                            ('v2f', (self.vertlist)),
-                            )
-        '''
 
         self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
         self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
-        
+        '''
         pyglet.graphics.draw(1, pyglet.gl.GL_POINTS,
                             ('v2f', (self.antenna_body.position)))
-        
-        self.antenna_pos_x = 24*cos(self.car_body.angle) + self.car_body.position[0]
-        self.antenna_pos_y = 24*sin(self.car_body.angle) + self.car_body.position[1]
+        '''
+        self.antenna_pos_x = 28*cos(self.car_body.angle) + self.car_body.position[0]
+        self.antenna_pos_y = 28*sin(self.car_body.angle) + self.car_body.position[1]
         self.deltaX = self.antenna_body.position[0] - self.antenna_pos_x
         self.deltaY = self.antenna_body.position[1] - self.antenna_pos_y
-        self.antenna_deg = atan2(self.deltaY,self.deltaX) * (-180/pi) + 83
-        self.new_antenna_pos_x = 30*cos(self.car_body.angle + .26) + self.car_body.position[0]
-        self.new_antenna_pos_y = 30*sin(self.car_body.angle + .26) + self.car_body.position[1]
+        self.antenna_deg = atan2(self.deltaY,self.deltaX) * (-180/pi) + 90
+        self.new_antenna_pos_x = 30*cos(self.car_body.angle + .28) + self.car_body.position[0]
+        self.new_antenna_pos_y = 30*sin(self.car_body.angle + .28) + self.car_body.position[1]
         self.antenna_sprite.set_position(self.new_antenna_pos_x, self.new_antenna_pos_y)
         self.antenna_sprite.rotation = self.antenna_deg
 
         self.antenna_sprite.draw()
+
+    def debug_draw(self):
+        for part in self.shape_list:
+            self.box_verts = part.get_points()
+            self.triangle_list = []
+            for v in self.box_verts: # transforms a list of tuple coords (Vec2d(x,y),Vec2d(x,y), etc) 
+                self.triangle_list.append(v.x) # to a list that pyglet can draw to [x,y, x,y, etc]
+                self.triangle_list.append(v.y)
+             # vehicle bb
+            pyglet.graphics.draw(len(self.triangle_list)//2, pyglet.gl.GL_POLYGON,
+                                ('v2f', self.triangle_list),
+                                ('c4B', (250,20,20,100)*(len(self.triangle_list)//2))
+                                )
+            
+            pyglet.graphics.draw(len(self.triangle_list)//2, pyglet.gl.GL_LINE_LOOP,
+                                ('v2f', self.triangle_list),
+                                ('c4B', (200,200,200,180)*(len(self.triangle_list)//2))
+                                )
+
+        self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
+        self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
+
+        self.new_antenna_pos_x = 29*cos(self.car_body.angle + .28) + self.car_body.position[0]
+        self.new_antenna_pos_y = 29*sin(self.car_body.angle + .28) + self.car_body.position[1]
+
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINE_LOOP,
+                            ('v2f', (self.antenna_body.position[0],self.antenna_body.position[1],self.new_antenna_pos_x,self.new_antenna_pos_y)))

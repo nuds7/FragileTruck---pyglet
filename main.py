@@ -12,6 +12,8 @@ import player
 import levelassembler
 import box
 import jelly
+import jellypolygon
+import bridge
 
 pyglet.resource.path = ['resources','resources/images']
 pyglet.resource.reindex()
@@ -26,6 +28,7 @@ class FirstWindow(pyglet.window.Window):
 		self.fps_display = pyglet.clock.ClockDisplay()
 		self.space = pymunk.Space()
 		self.space.gravity = (0,-800)
+		#self.space.sleep_time_threshold = .05
 		self.map_zip = "levels/pyglettest2.zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space)
 		self.level.pyglet_draw(self.batch)
@@ -36,7 +39,6 @@ class FirstWindow(pyglet.window.Window):
 										anchor_x = 'right', anchor_y = 'center')
 
 		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y), (self.level.mapWidth,self.level.mapHeight))
-		self.player.pyglet_draw(self.batch)
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
 		#self.box = box.CreatePymunkBox(.1, (50,20), 0.5, (50,300), self.space)
 		self.trans_blue = 125,175,250,200
@@ -47,19 +49,55 @@ class FirstWindow(pyglet.window.Window):
 		self.jelly = jelly.Jelly(self.space, 30, (1575,350), 2, 3, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
 		self.jelly2 = jelly.Jelly(self.space, 60, (1550,480), 6, 4, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
 		self.jelly3 = jelly.Jelly(self.space, 20, (1570,580), 8, 5, self.trans_red, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly4 = jelly.JellyTypeTwo(self.space, 8, (60,340), 18, 6, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly5 = jelly.JellyTypeTwo(self.space, 4, (70,380), 18, 7, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
+
+		self.bridge = bridge.Bridge(self.space, (350, 350), (50,10), 10)
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
 
-		self.checks = pyglet.image.create(8, 8, pyglet.image.CheckerImagePattern())
+		self.checks = pyglet.image.create(64, 64, pyglet.image.CheckerImagePattern())
 		self.background = pyglet.image.TileableTexture.create_for_image(self.checks)
-
 		self.scroll_zoom = 0
 
 		self.keys_held = [] # maintain a list of keys held
+		self.debug = False
+
+	def on_draw(self):
+		self.clear()
+		self.background.blit_tiled(0, 0, 0, self.level.mapWidth, self.level.mapHeight)
+		self.batch.draw()
+		self.jelly.draw()
+		self.jelly2.draw()
+		self.jelly3.draw()
+		self.jelly4.draw()
+		self.jelly5.draw()
+		
+		self.bridge.draw()
+		if self.debug == True:
+			self.player.debug_draw()
+		if not self.debug:
+			self.player.draw(self.batch)
+		
+
+		self.camera.hud_mode() # draw hud after this
+		self.label.draw()
+		self.fps_display.draw()
+
+	def update(self, dt):
+		self.space.step(0.015)
+		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
+		self.camera.update(self.player.car_body.position, (self.player_velocity/2 + 250+self.scroll_zoom), 0, (20,10))
+		self.level.update((self.camera.newPositionX,self.camera.newPositionY))
 
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)
+		if symbol == pyglet.window.key.D:
+			if self.debug == False:
+				self.debug = True
+			else: self.debug = False
+		
 	def on_key_release(self, symbol, modifiers):
 		self.keys_held.pop(self.keys_held.index(symbol))
 	def keyboard_input(self, dt):
@@ -101,32 +139,12 @@ class FirstWindow(pyglet.window.Window):
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		print(scroll_y)
 		if scroll_y <= -1.0:
-			self.scroll_zoom += 20
+			print("Zoom out")
+			self.scroll_zoom += 30*abs(scroll_y)
 		if scroll_y >= 1.0:
-			self.scroll_zoom -= 20
+			self.scroll_zoom -= 30*abs(scroll_y)
+			print("Zoom in")
 		
-	def update(self, dt):
-		self.space.step(0.015)
-		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
-		self.camera.update(self.player.car_body.position, (self.player_velocity/2 + 250+self.scroll_zoom), 0, (20,10))
-		self.level.update((self.camera.newPositionX,self.camera.newPositionY))
-		
-	def on_draw(self):
-		self.clear()
-		#glClearColor(.8,.8,.8,.5)
-		self.background.blit_tiled(0, 0, 0, self.level.mapWidth, self.level.mapHeight)
-		self.batch.draw()
-		self.player.pyglet_draw(self.batch)
-		#self.box.draw()
-		self.jelly.draw()
-		self.jelly2.draw()
-		self.jelly3.draw()
-
-		self.camera.hud_mode() # draw hud after this
-		self.label.draw()
-		self.fps_display.draw()
-		
-
 if __name__ == '__main__':
 	window = FirstWindow(1280,720)
 	pyglet.app.run()
