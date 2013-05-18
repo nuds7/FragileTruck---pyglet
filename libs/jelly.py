@@ -2,12 +2,13 @@ from math import sin,cos
 import pymunk
 import pyglet
 class Jelly:
-    def __init__ (self, space, radius, position, bounciness, group, color):
+    def __init__ (self, space, radius, position, bounciness, group, color, map_size):
         self.space = space
         self.radius = radius
         self.color = color
         self.group = group
         self.bounciness = bounciness
+        self.map_size = map_size
         self.angle = 0
         self.angle_to_add = .21
 
@@ -68,6 +69,17 @@ class Jelly:
             self.point_list.append(self.padded_y)
             self.padding_angle += self.angle_to_add
             self.part_body.angular_velocity *= 0.0
+
+            if self.part_body.position[1] < 0:
+                self.part_body.position[1] = self.part_radius + 2
+            if self.part_body.position[0] < 0:
+                self.part_body.position[0] = self.part_radius + 2
+            if self.part_body.position[1] > self.map_size[1]:
+                self.part_body.position[1] = self.map_size[1] - 2
+            if self.part_body.position[0] > self.map_size[0]:
+                self.part_body.position[0] = self.map_size[0] - 2
+            
+
 
         self.point_list_length = len(self.point_list)//2
 

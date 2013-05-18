@@ -38,8 +38,9 @@ class Circle:
                             )
 
 class Player:
-    def __init__(self, space, body_position):
+    def __init__(self, space, body_position, map_size):
         self.space = space
+        self.map_size = map_size
         
         self.lcircle = Circle()
         self.rcircle = Circle()
@@ -178,6 +179,16 @@ class Player:
 
     def pyglet_draw(self, batch):
         self.batch = batch
+
+        if self.car_body.position[1] < 0:
+            self.car_body.position[1] = 5
+        if self.car_body.position[1] > self.map_size[1]:
+            self.car_body.position[1] = self.map_size[1] - self.body_size[1] - 30
+
+        if self.left_wheel_b.position[1] < 0:
+            self.left_wheel_b.position[1] = self.left_wheel_radius + 2
+        if self.left_wheel_b.position[1] < 0:
+            self.right_wheel_b.position[1] = self.right_wheel_radius + 2
         
         self.sprite_x = 5*cos(self.car_body.angle-5) + self.car_body.position[0]
         self.sprite_y = 5*sin(self.car_body.angle-5) + self.car_body.position[1]

@@ -12,11 +12,9 @@ import player
 import levelassembler
 import box
 import jelly
-import jellytwo
 
 pyglet.resource.path = ['resources','resources/images']
 pyglet.resource.reindex()
-
 
 class FirstWindow(pyglet.window.Window):
 	def __init__(self, *args, **kwargs):
@@ -37,7 +35,7 @@ class FirstWindow(pyglet.window.Window):
 										x = self.width, y = 6, 
 										anchor_x = 'right', anchor_y = 'center')
 
-		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y))
+		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y), (self.level.mapWidth,self.level.mapHeight))
 		self.player.pyglet_draw(self.batch)
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
 		#self.box = box.CreatePymunkBox(.1, (50,20), 0.5, (50,300), self.space)
@@ -46,19 +44,17 @@ class FirstWindow(pyglet.window.Window):
 		self.trans_red = 255,125,125,200
 		self.trans_black = 25,25,25,200
 		
-		self.jelly = jelly.Jelly(self.space, 30, (1575,350), 2, 3, self.trans_blue)
-		self.jelly2 = jelly.Jelly(self.space, 60, (1550,480), 6, 4, self.trans_green)
-		self.jelly3 = jelly.Jelly(self.space, 20, (1570,580), 8, 5, self.trans_red)
-
-		#self.jellytypetwo = jellytwo.Jelly(self.space, 30, (220,580), 8, 6, self.trans_black)
-		self.jellypoly = jellytwo.PolygonJelly(self.space, 18)
+		self.jelly = jelly.Jelly(self.space, 30, (1575,350), 2, 3, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly2 = jelly.Jelly(self.space, 60, (1550,480), 6, 4, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly3 = jelly.Jelly(self.space, 20, (1570,580), 8, 5, self.trans_red, (self.level.mapWidth,self.level.mapHeight))
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
 
+		self.checks = pyglet.image.create(8, 8, pyglet.image.CheckerImagePattern())
+		self.background = pyglet.image.TileableTexture.create_for_image(self.checks)
+
 		self.scroll_zoom = 0
-		self.polygon_points = []
-		self.polygon_points_length = 0
 
 		self.keys_held = [] # maintain a list of keys held
 
@@ -97,12 +93,8 @@ class FirstWindow(pyglet.window.Window):
 			self.player.right_wheel_b.angular_velocity   	*= .95
 
 	def on_mouse_press(self, x, y, button, modifiers):
-		self.polygon_point_x = x
-		self.polygon_point_y = y
-		self.polygon_points.append(x)
-		self.polygon_points.append(y)
-		self.polygon_points_length = len(self.polygon_points)//2
-		
+		pass
+
 	def on_mouse_release(self, x, y, button, modifiers):
 		pass
 
@@ -121,23 +113,18 @@ class FirstWindow(pyglet.window.Window):
 		
 	def on_draw(self):
 		self.clear()
-		glClearColor(.8,.8,.8,.5)
+		#glClearColor(.8,.8,.8,.5)
+		self.background.blit_tiled(0, 0, 0, self.level.mapWidth, self.level.mapHeight)
 		self.batch.draw()
 		self.player.pyglet_draw(self.batch)
 		#self.box.draw()
 		self.jelly.draw()
 		self.jelly2.draw()
 		self.jelly3.draw()
-		#self.jellytypetwo.draw()
-		self.jellypoly.draw()
 
 		self.camera.hud_mode() # draw hud after this
 		self.label.draw()
 		self.fps_display.draw()
-		pyglet.graphics.draw(self.polygon_points_length, pyglet.gl.GL_LINE_LOOP,
-                            ('v2f', self.polygon_points),
-                            ('c4B', (255,255,255,140)*self.polygon_points_length)
-                            )
 		
 
 if __name__ == '__main__':

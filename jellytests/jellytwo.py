@@ -1,4 +1,4 @@
-from math import sin,cos
+from math import sin,cos,sqrt
 import pymunk
 from pymunk import Vec2d
 import pyglet
@@ -89,57 +89,59 @@ class Jelly:
                             )
 
 class PolygonJelly:
-    def __init__ (self, space, stiffness):
+    def __init__ (self, space, points, stiffness):
         self.space = space
         self.stiffness = stiffness
 
+        self.points = points
         self.list = []
 
         self.mass               = .02
         self.radius             = 5
-        
         self.inertia            = pymunk.moment_for_circle(self.mass, 0, self.radius)
 
-        self.body1               = pymunk.Body(self.mass, self.inertia)
-        self.body1.position      = 300,310
-        self.shape1              = pymunk.Circle(self.body1, self.radius)
-        self.shape1.friction     = .2
-        self.shape1.group        = 7
+        for point in self.points:
+            #print(point)
+            self.body               = pymunk.Body(self.mass, self.inertia)
+            self.body.position      = point
+            self.shape              = pymunk.Circle(self.body, self.radius)
+            self.shape.friction     = .2
+            self.shape.group        = 7
 
-        self.space.add(self.body1, self.shape1)
-        self.list.append(self.body1)
+            self.space.add(self.body, self.shape)
+            self.list.append(self.body)
 
-        self.body2               = pymunk.Body(self.mass, self.inertia)
-        self.body2.position      = 270,270
-        self.shape2              = pymunk.Circle(self.body2, self.radius)
-        self.shape2.friction     = .2
-        self.shape2.group        = 7
-
-        self.space.add(self.body2, self.shape2)
-        self.list.append(self.body2)
-
-        self.body3               = pymunk.Body(self.mass, self.inertia)
-        self.body3.position      = 330,270
-        self.shape3              = pymunk.Circle(self.body3, self.radius)
-        self.shape3.friction     = .2
-        self.shape3.group        = 7
-
-        self.space.add(self.body3, self.shape3)
-        self.list.append(self.body3)
-
-        self.list_item = 0
-
+        list_item = 0
         for body in self.list[1:]:
-            self.spring = pymunk.constraint.DampedSpring(body, self.list[self.list_item], (0,0), (0,0), 30, self.stiffness, .1)
+            #print(body.position)
+            distance = sqrt((self.list[list_item].position[0]-body.position[0])**2 + (body.position[1]-self.list[list_item].position[1])**2)
+            print(distance)
+            self.spring = pymunk.constraint.DampedSpring(body, self.list[list_item], (0,0), (0,0), distance, self.stiffness, .1)
             self.space.add(self.spring)
-            self.list_item += 1
+            list_item += 1
 
-        self.spring = pymunk.constraint.DampedSpring(self.list[0], self.list[-1], (0,0), (0,0), 30, self.stiffness, .1)
+        list_item_tri = 0
+        if len(self.list) > 3:
+            for body in self.list[2:]:
+                print(body.position)
+                print(self.list[list_item_tri].position)
+                distance = sqrt( (self.list[list_item_tri].position[0]-body.position[0])**2 + (self.list[list_item_tri].position[1]-body.position[1])**2 )
+                print(distance)
+                self.spring = pymunk.constraint.DampedSpring(body, self.list[list_item_tri], (0,0), (0,0), distance, self.stiffness, .1)
+                self.space.add(self.spring)
+                list_item_tri += 1
+
+        distance = sqrt((self.list[-1].position[0]-self.list[0].position[0])**2 + (self.list[-1].position[1]-self.list[0].position[1])**2)
+        self.spring = pymunk.constraint.DampedSpring(self.list[0], self.list[-1], (0,0), (0,0), distance, self.stiffness, .1)
         self.space.add(self.spring)
-                
+
+        distance = sqrt((self.list[-2].position[0]-self.list[0].position[0])**2 + (self.list[-2].position[1]-self.list[0].position[1])**2)
+        self.spring = pymunk.constraint.DampedSpring(self.list[0], self.list[-2], (0,0), (0,0), distance, self.stiffness, .1)
+        self.space.add(self.spring)
 
     def draw(self):
         self.point_list = []
+        list_item = 1
         for body in self.list:
             self.point_list.append(body.position.x)
             self.point_list.append(body.position.y)
