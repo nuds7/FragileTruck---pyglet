@@ -28,7 +28,7 @@ class FirstWindow(pyglet.window.Window):
 		self.fps_display = pyglet.clock.ClockDisplay()
 		self.space = pymunk.Space()
 		self.space.gravity = (0,-800)
-		#self.space.sleep_time_threshold = .05
+		self.space.sleep_time_threshold = .05
 		self.map_zip = "levels/pyglettest2.zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space)
 		self.level.pyglet_draw(self.batch)
@@ -49,10 +49,10 @@ class FirstWindow(pyglet.window.Window):
 		self.jelly = jelly.Jelly(self.space, 30, (1575,350), 2, 3, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
 		self.jelly2 = jelly.Jelly(self.space, 60, (1550,480), 6, 4, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
 		self.jelly3 = jelly.Jelly(self.space, 20, (1570,580), 8, 5, self.trans_red, (self.level.mapWidth,self.level.mapHeight))
-		self.jelly4 = jelly.JellyTypeTwo(self.space, 8, (60,340), 18, 6, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
-		self.jelly5 = jelly.JellyTypeTwo(self.space, 4, (70,380), 18, 7, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly4 = jelly.JellyTypeTwo(self.space, 4, (120,340), 8, 6, self.trans_blue, (self.level.mapWidth,self.level.mapHeight))
+		self.jelly5 = jelly.JellyTypeTwo(self.space, 4, (130,380), 8, 7, self.trans_green, (self.level.mapWidth,self.level.mapHeight))
 
-		self.bridge = bridge.Bridge(self.space, (350, 350), (50,10), 10)
+		self.bridge = bridge.Bridge(self.space, (350, 350), (45,5), 10)
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
@@ -94,7 +94,7 @@ class FirstWindow(pyglet.window.Window):
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)
 		if symbol == pyglet.window.key.D:
-			if self.debug == False:
+			if self.debug == False: 
 				self.debug = True
 			else: self.debug = False
 		
@@ -107,6 +107,7 @@ class FirstWindow(pyglet.window.Window):
 		# Moves with arrow keys
 		if pyglet.window.key.R in self.keys_held:
 			self.player.reset()
+			self.scroll_zoom = 0
 		if pyglet.window.key.UP in self.keys_held:
 			self.player.force(self.player.car_body,(0,80))
 		# Movement
@@ -132,18 +133,15 @@ class FirstWindow(pyglet.window.Window):
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		pass
-
 	def on_mouse_release(self, x, y, button, modifiers):
 		pass
-
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-		print(scroll_y)
 		if scroll_y <= -1.0:
-			print("Zoom out")
 			self.scroll_zoom += 30*abs(scroll_y)
+			print("Zooming out by:", 30*abs(scroll_y))
 		if scroll_y >= 1.0:
 			self.scroll_zoom -= 30*abs(scroll_y)
-			print("Zoom in")
+			print("Zooming in by:", 30*abs(scroll_y))
 		
 if __name__ == '__main__':
 	window = FirstWindow(1280,720)

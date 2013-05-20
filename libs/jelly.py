@@ -55,6 +55,10 @@ class Jelly:
 
 
     def draw(self):
+        # Change the outline color if the body is sleeping
+        self.outline_color = (0,0,0)
+        if self.part_body.is_sleeping: self.outline_color = (255,0,0)
+
         self.point_list = []
         self.padding_angle = self.body.angle
         for self.part_body in self.list:
@@ -79,6 +83,8 @@ class Jelly:
                 self.part_body.position[1] = self.map_size[1] - self.part_radius
             if self.part_body.position[0] > self.map_size[0]:
                 self.part_body.position[0] = self.map_size[0] - self.part_radius
+
+            self.sleeping = self.part_body.is_sleeping
             
 
 
@@ -89,15 +95,17 @@ class Jelly:
                             ('c4B', self.color*self.point_list_length)
                             )
 
+
         pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_LINE_LOOP,
                             ('v2f', self.point_list),
-                            ('c4B', (0,0,0,140)*self.point_list_length)
+                            ('c3B', (self.outline_color)*self.point_list_length)
                             )
-
+        '''
         pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_POINTS,
                             ('v2f', self.point_list),
                             ('c3B', (255,255,255)*self.point_list_length)
                             )
+        '''
 
 class JellyTypeTwo:
     def __init__ (self, space, radius, position, bounciness, group, color, map_size):
@@ -126,7 +134,7 @@ class JellyTypeTwo:
 
         for i in range(30):
             self.part_mass          = .002
-            self.part_radius        = 10
+            self.part_radius        = 6
             
             self.position_x         = self.radius*cos(self.angle) + self.body.position[0]
             self.position_y         = self.radius*sin(self.angle) + self.body.position[1]
@@ -136,7 +144,7 @@ class JellyTypeTwo:
             self.part_body               = pymunk.Body(self.part_mass, pymunk.inf)
             self.part_body.position      = self.new_position
             self.part_shape              = pymunk.Circle(self.part_body, self.part_radius)
-            self.part_shape.friction     = .8
+            self.part_shape.friction     = .4
             self.part_shape.group        = self.group
             self.angle += self.angle_to_add
 
@@ -154,6 +162,10 @@ class JellyTypeTwo:
 
 
     def draw(self):
+        # Change the outline color if the body is sleeping
+        self.outline_color = (0,0,0)
+        if self.part_body.is_sleeping: self.outline_color = (255,0,0)
+
         self.point_list = []
         self.padding_angle = self.body.angle
         for self.part_body in self.list:
@@ -161,6 +173,7 @@ class JellyTypeTwo:
             self.point_list.append(self.part_body.position[0])
             self.point_list.append(self.part_body.position[1])
             '''
+
             # Adding padding with the width of the parts of the jelly
             self.padded_x = self.part_radius*cos(self.padding_angle) + self.part_body.position[0]
             self.padded_y = self.part_radius*sin(self.padding_angle) + self.part_body.position[1]
@@ -168,6 +181,7 @@ class JellyTypeTwo:
             self.point_list.append(self.padded_y)
             self.padding_angle += self.angle_to_add
             #self.part_body.angular_velocity *= 0.01
+            #print(abs(self.part_body.position[1]) - abs(self.body.position[1]))
 
         self.point_list_length = len(self.point_list)//2
 
@@ -178,17 +192,18 @@ class JellyTypeTwo:
 
         pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_LINE_LOOP,
                             ('v2f', self.point_list),
-                            ('c4B', (0,0,0,140)*self.point_list_length)
+                            ('c3B', (self.outline_color)*self.point_list_length)
                             )
-
+        '''
         pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_POINTS,
                             ('v2f', self.point_list),
                             ('c3B', (255,255,255)*self.point_list_length)
                             )
+        '''
         if self.part_body.position[1] < 0:
-            self.part_body.position[1] = self.part_radius + self.part_radius
+            self.part_body.position[1] = self.part_radius + self.part_radius + 10
         if self.part_body.position[0] < 0:
-            self.part_body.position[0] = self.part_radius + self.part_radius
+            self.part_body.position[0] = self.part_radius + self.part_radius + 10
         if self.part_body.position[1] > self.map_size[1]:
             self.part_body.position[1] = self.map_size[1] - self.part_radius
         if self.part_body.position[0] > self.map_size[0]:

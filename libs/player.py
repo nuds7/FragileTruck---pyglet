@@ -22,20 +22,29 @@ class Circle:
         self.angle = angle
         self.position = position
         self.clist = [self.position[0],self.position[1]]
+        #self.clist = []
 
         for i in range(13):
             c = Circle(radius=self.radius, angle=self.angle, position=self.position, add=self.add)
             self.clist.append(c.x)
             self.clist.append(c.y)
-            self.add += .5
+            self.add += .475
 
         self.list_length = len(self.clist)//2
         if self.add > self.list_length/self.add:
             self.add = 0
 
-        pyglet.graphics.draw(self.list_length, pyglet.gl.GL_LINE_STRIP,
-                            ('v2f', (self.clist))
+        pyglet.graphics.draw(self.list_length, pyglet.gl.GL_POLYGON,
+                            ('v2f', (self.clist)),
+                            ('c4B', (0,0,0,100)*self.list_length)
                             )
+
+        pyglet.graphics.draw(self.list_length, pyglet.gl.GL_LINE_STRIP,
+                            ('v2f', (self.clist)),
+                            ('c3B', (0,0,0)*self.list_length)
+                            )
+
+        
 
 class Player:
     def __init__(self, space, body_position, map_size):
@@ -132,11 +141,11 @@ class Player:
         self.space.add(self.antenna_body, self.antenna_poly, self.antenna_spring, self.antenna_slide)
 
 
-        self.player_image = pyglet.resource.image("truck.png")
+        self.player_image = pyglet.resource.image("truck2.png")
         self.player_image.anchor_x = self.player_image.width/2 + 1
         self.player_image.anchor_y = self.player_image.height/2
         self.player_sprite = pyglet.sprite.Sprite(self.player_image)
-        #self.player_sprite.scale = .47
+        self.player_sprite.scale = .5
 
         self.antenna_image = pyglet.resource.image("antenna.png")
         self.antenna_image.anchor_x = 4
@@ -210,6 +219,8 @@ class Player:
 
         self.antenna_sprite.draw()
 
+        if self.car_body.is_sleeping: self.car_body.activate()
+
     def debug_draw(self):
         for part in self.shape_list:
             self.box_verts = part.get_points()
@@ -236,3 +247,5 @@ class Player:
 
         pyglet.graphics.draw(2, pyglet.gl.GL_LINE_LOOP,
                             ('v2f', (self.antenna_body.position[0],self.antenna_body.position[1],self.new_antenna_pos_x,self.new_antenna_pos_y)))
+
+        if self.car_body.is_sleeping: self.car_body.activate()
