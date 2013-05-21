@@ -8,11 +8,12 @@ class Camera(object):
 		self.map_size = map_size
 		self.newPositionX = 0
 		self.newPositionY = 0
+		self.newAngle = 0
 		self.newWeightedScale = 200
-	def update(self, target, scale, angle, rate):
+	def update(self, target, scale, rate):
 		self.target = target
 		self.scale = scale
-		self.angle = angle
+		#self.angle = angle
 		self.rate = rate
 		
 		self.newPositionX = ((self.newPositionX*(self.rate[0]-1))+self.target[0]) / self.rate[0]
@@ -21,7 +22,7 @@ class Camera(object):
 		glMatrixMode(GL_MODELVIEW)
 		glLoadIdentity()
 		glTranslatef(self.newPositionX*-1, self.newPositionY*-1, 0)
-		glRotatef(self.angle,1.0,0.0,0.0)
+		#glRotatef(self.angle,0.0,0.0,1.0)
 		
 		'''
 		gluLookAt(
@@ -42,8 +43,10 @@ class Camera(object):
 			+self.newWeightedScale)
 
 		self.mouseScale = self.newWeightedScale * aspect
-		
-
+	
+	def rotate(self, angle):
+		self.newAngle = ((self.newAngle*(100-1))+angle) / 100
+		glRotatef(self.newAngle, 0, 0, 1)
 		
 	def hud_mode(self):
 		glMatrixMode(GL_PROJECTION)

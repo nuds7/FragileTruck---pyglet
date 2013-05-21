@@ -4,7 +4,7 @@ import pymunk
 from pymunk import Vec2d
 import sys, os
 import math
-from math import sin,cos,tan
+from math import sin,cos,tan,degrees
 lib_path = os.path.abspath('libs/')
 sys.path.append(lib_path)
 import camera
@@ -65,7 +65,8 @@ class FirstWindow(pyglet.window.Window):
 		self.debug = False
 
 	def on_draw(self):
-		self.clear()
+		self.camera.rotate(sin(self.player.car_body.angle)*-10)
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		self.background.blit_tiled(0, 0, 0, self.level.mapWidth, self.level.mapHeight)
 		self.batch.draw()
 		self.jelly.draw()
@@ -79,7 +80,6 @@ class FirstWindow(pyglet.window.Window):
 			self.player.debug_draw()
 		if not self.debug:
 			self.player.draw(self.batch)
-		
 
 		self.camera.hud_mode() # draw hud after this
 		self.label.draw()
@@ -88,7 +88,7 @@ class FirstWindow(pyglet.window.Window):
 	def update(self, dt):
 		self.space.step(0.015)
 		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
-		self.camera.update(self.player.car_body.position, (self.player_velocity/2 + 250+self.scroll_zoom), 0, (20,10))
+		self.camera.update(self.player.car_body.position, (self.player_velocity/2 + 250+self.scroll_zoom), (20,10))
 		self.level.update((self.camera.newPositionX,self.camera.newPositionY))
 
 	def on_key_press(self, symbol, modifiers):
@@ -142,7 +142,15 @@ class FirstWindow(pyglet.window.Window):
 		if scroll_y >= 1.0:
 			self.scroll_zoom -= 30*abs(scroll_y)
 			print("Zooming in by:", 30*abs(scroll_y))
+	def on_resize(self, width, height):
+	    # Override the default on_resize handler to create a 3D projection
+	    glViewport(0, 0, width, height)
+	    glMatrixMode(GL_PROJECTION)
+	    glLoadIdentity()
+	    gluPerspective(60., width / float(height), .1, 1000.)
+	    glMatrixMode(GL_MODELVIEW)
+	    return pyglet.event.EVENT_HANDLED
 		
 if __name__ == '__main__':
-	window = FirstWindow(1280,720)
+	window = FirstWindow(1280,720, resizable=True)
 	pyglet.app.run()

@@ -57,37 +57,34 @@ class Jelly:
     def draw(self):
         # Change the outline color if the body is sleeping
         self.outline_color = (0,0,0)
-        if self.part_body.is_sleeping: self.outline_color = (255,0,0)
+        if self.part_body.is_sleeping: 
+            self.outline_color = (255,0,0)
+        else:
+            self.point_list = []
+            self.padding_angle = self.body.angle
+            for self.part_body in self.list:
+                ''' # actual position of the parts of the jelly
+                self.point_list.append(self.part_body.position[0])
+                self.point_list.append(self.part_body.position[1])
+                '''
+                # Adding padding with the width of the parts of the jelly
+                self.padded_x = self.part_radius*cos(self.padding_angle) + self.part_body.position[0]
+                self.padded_y = self.part_radius*sin(self.padding_angle) + self.part_body.position[1]
+                self.point_list.append(self.padded_x)
+                self.point_list.append(self.padded_y)
+                self.padding_angle += self.angle_to_add
+                #self.part_body.angular_velocity *= 0.0
 
-        self.point_list = []
-        self.padding_angle = self.body.angle
-        for self.part_body in self.list:
-            ''' # actual position of the parts of the jelly
-            self.point_list.append(self.part_body.position[0])
-            self.point_list.append(self.part_body.position[1])
-            '''
-            # Adding padding with the width of the parts of the jelly
-            self.padded_x = self.part_radius*cos(self.padding_angle) + self.part_body.position[0]
-            self.padded_y = self.part_radius*sin(self.padding_angle) + self.part_body.position[1]
-            self.point_list.append(self.padded_x)
-            self.point_list.append(self.padded_y)
-            self.padding_angle += self.angle_to_add
-            #self.part_body.angular_velocity *= 0.0
+                if self.part_body.position[1] < 0:
+                    self.part_body.position[1] = self.part_radius + self.part_radius
+                if self.part_body.position[0] < 0:
+                    self.part_body.position[0] = self.part_radius + self.part_radius
 
-            if self.part_body.position[1] < 0:
-                self.part_body.position[1] = self.part_radius + self.part_radius
-            if self.part_body.position[0] < 0:
-                self.part_body.position[0] = self.part_radius + self.part_radius
-
-            if self.part_body.position[1] > self.map_size[1]:
-                self.part_body.position[1] = self.map_size[1] - self.part_radius
-            if self.part_body.position[0] > self.map_size[0]:
-                self.part_body.position[0] = self.map_size[0] - self.part_radius
-
-            self.sleeping = self.part_body.is_sleeping
+                if self.part_body.position[1] > self.map_size[1]:
+                    self.part_body.position[1] = self.map_size[1] - self.part_radius
+                if self.part_body.position[0] > self.map_size[0]:
+                    self.part_body.position[0] = self.map_size[0] - self.part_radius
             
-
-
         self.point_list_length = len(self.point_list)//2
 
         pyglet.graphics.draw(self.point_list_length, pyglet.gl.GL_POLYGON,
@@ -164,24 +161,25 @@ class JellyTypeTwo:
     def draw(self):
         # Change the outline color if the body is sleeping
         self.outline_color = (0,0,0)
-        if self.part_body.is_sleeping: self.outline_color = (255,0,0)
+        if self.part_body.is_sleeping: 
+            self.outline_color = (255,0,0)
+        else:
+            self.point_list = []
+            self.padding_angle = self.body.angle
+            for self.part_body in self.list:
+                ''' # actual position of the parts of the jelly
+                self.point_list.append(self.part_body.position[0])
+                self.point_list.append(self.part_body.position[1])
+                '''
 
-        self.point_list = []
-        self.padding_angle = self.body.angle
-        for self.part_body in self.list:
-            ''' # actual position of the parts of the jelly
-            self.point_list.append(self.part_body.position[0])
-            self.point_list.append(self.part_body.position[1])
-            '''
-
-            # Adding padding with the width of the parts of the jelly
-            self.padded_x = self.part_radius*cos(self.padding_angle) + self.part_body.position[0]
-            self.padded_y = self.part_radius*sin(self.padding_angle) + self.part_body.position[1]
-            self.point_list.append(self.padded_x)
-            self.point_list.append(self.padded_y)
-            self.padding_angle += self.angle_to_add
-            #self.part_body.angular_velocity *= 0.01
-            #print(abs(self.part_body.position[1]) - abs(self.body.position[1]))
+                # Adding padding with the width of the parts of the jelly
+                self.padded_x = self.part_radius*cos(self.padding_angle) + self.part_body.position[0]
+                self.padded_y = self.part_radius*sin(self.padding_angle) + self.part_body.position[1]
+                self.point_list.append(self.padded_x)
+                self.point_list.append(self.padded_y)
+                self.padding_angle += self.angle_to_add
+                #self.part_body.angular_velocity *= 0.01
+                #print(abs(self.part_body.position[1]) - abs(self.body.position[1]))
 
         self.point_list_length = len(self.point_list)//2
 
