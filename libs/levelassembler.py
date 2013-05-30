@@ -10,25 +10,11 @@ import bridge
 import jelly
 import time
 #import playerdetector
-#import chromaimage
-'''
-originalMoveImg = pygame.image.load('assets/images/tipmove.png')
-moveImg = chromaimage.ChromaSurface(originalMoveImg)
-
-originalSpaceImg = pygame.image.load('assets/images/tipspace.png')
-spaceImg = chromaimage.ChromaSurface(originalSpaceImg)
-'''
 class Game_Level:
 	def __init__(self, map_zip, space, batch, ordered_group_bg, ordered_group_fg):
 		self.batch = batch
 		self.ordered_group_bg = ordered_group_bg
 		self.ordered_group_fg = ordered_group_fg
-		'''
-		self.bg = pyglet.resource.image("bg.png")
-		self.bg2 = pyglet.resource.image("bg2.png")
-		self.bg_sprite = pyglet.sprite.Sprite(self.bg)
-		self.bg2_sprite = pyglet.sprite.Sprite(self.bg2)
-		'''
 		################################ Map Config
 		self.map_zip = zipfile.ZipFile(map_zip)
 		self.map_config_file = self.map_zip.extract('map_config.cfg', path = 'temp')
