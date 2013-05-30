@@ -6,8 +6,8 @@ class Camera(object):
 		self.position = position
 		self.screen_size = screen_size
 		self.map_size = map_size
-		self.newPositionX = 0
-		self.newPositionY = 0
+		self.newPositionX = self.screen_size[0]//2
+		self.newPositionY = self.screen_size[1]//2
 		self.newAngle = 0
 		self.newWeightedScale = 200
 		self.newTarget = [0,0]
@@ -41,7 +41,11 @@ class Camera(object):
 		self.newPositionX = ((self.newPositionX*(self.rate[0]-1))+self.newTarget[0]) / self.rate[0]
 		self.newPositionY = ((self.newPositionY*(self.rate[1]-1))+self.newTarget[1]) / self.rate[1]
 		self.newWeightedScale = ((self.newWeightedScale*(30-1))+self.scale) / 30
-		
+		'''
+		print(self.newWeightedScale)
+		if self.newWeightedScale * aspect > self.map_size[1]:
+			self.newWeightedScale = self.map_size[1]
+		'''
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
 		
@@ -56,8 +60,10 @@ class Camera(object):
 
 		glMatrixMode(GL_MODELVIEW)
 		glLoadIdentity()
-		glTranslatef(self.newPositionX*-1, self.newPositionY*-1, 0)
-		
+		#glTranslatef(self.newPositionX*-1, self.newPositionY*-1, 0)
+		gluLookAt(self.newPositionX, self.newPositionY, +1,
+				  self.newPositionX, self.newPositionY, -1,
+				  sin(0),cos(0),0.0)
 		#self.mouseScale = self.newWeightedScale * aspect
 		
 	def hud_mode(self):

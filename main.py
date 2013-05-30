@@ -24,12 +24,13 @@ class FirstWindow(pyglet.window.Window):
 		super(FirstWindow, self).__init__(*args, **kwargs) #set size
 		glEnable(GL_BLEND)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+		glEnable(GL_LINE_SMOOTH)
 		#self.set_vsync(False)
 
 		self.batch = pyglet.graphics.Batch()
 		self.uiBatch = pyglet.graphics.Batch()
-		self.background = pyglet.graphics.OrderedGroup(0)
-		self.foreground = pyglet.graphics.OrderedGroup(1)
+		self.background = pyglet.graphics.OrderedGroup(1)
+		self.foreground = pyglet.graphics.OrderedGroup(2)
 		self.fps_display = pyglet.clock.ClockDisplay()
 		self.space = pymunk.Space()
 		self.space.enable_contact_graph = True
@@ -72,7 +73,7 @@ class FirstWindow(pyglet.window.Window):
 		self.keys_held = [] # maintain a list of keys held
 		self.debug = False
 
-		#self.player_velocity/2 + 250+self.scroll_zoom
+		self.mouse_verts = []
 
 	def on_draw(self):
 		self.space.step(0.015)
@@ -85,7 +86,10 @@ class FirstWindow(pyglet.window.Window):
 		glClearColor(150,150,150,0)
 		self.batch.draw()
 		self.vehicle_particles.draw((150,50,50))
-
+		pyglet.graphics.draw(len(self.mouse_verts)//2, pyglet.gl.GL_POINTS,
+                            ('v2f', (self.mouse_verts)),
+                            ('c4B', (255,0,0,100)*(len(self.mouse_verts)//2))
+                            )
 		if self.debug == True:
 			self.player.debug_draw()
 		else:
@@ -159,7 +163,18 @@ class FirstWindow(pyglet.window.Window):
 			self.player.right_wheel_b.angular_velocity   	*= .95
 
 	def on_mouse_press(self, x, y, button, modifiers):
-		pass
+		aspect = (self.width/self.height)
+		# hOLY SHIT DON'T TOUCH THIS ########################################################################################
+		self.worldMouseX = (self.camera.newPositionX -
+							(self.camera.newWeightedScale*aspect)) +x*((self.camera.newWeightedScale*aspect)/self.width)*2
+		self.worldMouseY = (self.camera.newPositionY -
+							self.camera.newWeightedScale) +y*((self.camera.newWeightedScale)/self.height)*2
+		# hOLY SHIT DON'T TOUCH THIS ########################################################################################
+		print(x,y)
+		print(self.worldMouseX,self.worldMouseY)
+		self.mouse_verts.append(self.worldMouseX)
+		self.mouse_verts.append(self.worldMouseY)
+
 	def on_mouse_release(self, x, y, button, modifiers):
 		pass
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):

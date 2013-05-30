@@ -104,11 +104,11 @@ class Game_Level:
 		# pyglet.resource.reindex after every time we unzip an image.
 		pyglet.resource.reindex()
 		self.bg = pyglet.resource.image("bg.png")
-		self.bg_sprite = pyglet.sprite.Sprite(self.bg)
+		self.bg_sprite = pyglet.sprite.Sprite(self.bg, batch = batch, group = self.ordered_group_bg)
 		self.bg2 = self.map_zip.extract('bg2.png', path = 'resources/temp')
 		pyglet.resource.reindex()
 		self.bg2 = pyglet.resource.image("bg2.png")
-		self.bg2_sprite = pyglet.sprite.Sprite(self.bg2)
+		self.bg2_sprite = pyglet.sprite.Sprite(self.bg2, batch = batch, group = self.ordered_group_bg)
 		self.map_zip.close()
 
 		self.bg_sprite.batch = self.batch
@@ -121,7 +121,7 @@ class Game_Level:
 			p2 = line.b # end of seg
 			self.stuff = self.batch.add(2, pyglet.gl.GL_LINES, ordered_group_fg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
-										('c3B/static', (255,0,0,0,255,0)))
+										('c3B/static', (125,10,160,0,255,0)))
 
 
 	def update(self, camera_offset):
