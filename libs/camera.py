@@ -6,14 +6,16 @@ class Camera(object):
 		self.position = position
 		self.screen_size = screen_size
 		self.map_size = map_size
-		self.newPositionX = self.screen_size[0]//2
-		self.newPositionY = self.screen_size[1]//2
+		self.newPositionX = map_size[0]//2
+		self.newPositionY = map_size[1]//2
 		self.newAngle = 0
-		self.newWeightedScale = 200
+		self.newWeightedScale = map_size[0]//4
 		self.newTarget = [0,0]
 	def update(self, target, scale, angle, rate):
 		self.target = target
 		self.scale = scale
+		if self.scale >= self.map_size[1]//2:
+			self.scale = self.map_size[1]//2
 		#self.angle = angle
 		self.rate = rate
 		aspect = self.screen_size[0] / self.screen_size[1]

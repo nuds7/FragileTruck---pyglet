@@ -74,11 +74,10 @@ class Bridge:
 			self.bridgeFillDraw = batch.add_indexed(4, pyglet.gl.GL_TRIANGLES, ordered_group, [0,1,2,2,3,0], ('v2f'), ('c4B', (0,0,0,50)*4))
 			self.bridgeFillList.append(self.bridgeFillDraw)
 
-		glPointSize(5)
 		self.bridgeAnchors = batch.add(2, pyglet.gl.GL_POINTS, ordered_group, ('v2f', (self.start_constraint.position[0],self.start_constraint.position[1],
 																	self.end_constraint.position[0],self.end_constraint.position[1])),
 																	('c3B', (0,255,0)*2))
-			
+		glPointSize(4)
 	def draw(self):
 		# Change the outline color if the body is sleeping
 		self.outline_color = (200,200,200)

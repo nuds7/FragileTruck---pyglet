@@ -36,3 +36,5 @@ bridge.Bridge(self.space, (875, 140), (30,5), 6, 0, self.batch, self.ordered_gro
 bridge.Bridge(self.space, (1075, 640), (80,10), 12, 200, self.batch, self.ordered_group_fg)
 jelly.Jelly(self.space, (120,400), 30, 2, 3, (125,175,250,200), self.batch, self.ordered_group_fg)
 jelly.Jelly(self.space, (320,400), 20, 8, 4, (200,175,125,200), self.batch, self.ordered_group_fg)
+jelly.Jelly(self.space, (1220,400), 40, 10, 5, (250,125,125,200), self.batch, self.ordered_group_fg)
+elevator.Elevator(self.space, (200,170), (240,10), 200, 10, 10, 200, 200, self.batch, self.ordered_group_fg)
