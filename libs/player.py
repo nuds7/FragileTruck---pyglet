@@ -213,6 +213,7 @@ class Player:
 
         self.mouseGrabbed = False
         self.grabFirstClick = True
+        self.player_max_ang_vel = 100
 
     def force(self, body_to_impulse, impulse):
         self.impulse            = Vec2d(impulse)
@@ -341,3 +342,31 @@ class Player:
                 iterNum += 1
     
         #if self.car_body.is_sleeping: self.car_body.activate()
+
+    def controls(self, keys_held):
+        self.keys_held = keys_held
+        if pyglet.window.key.LEFT in self.keys_held:
+            self.car_body.angular_velocity += 0.5
+        if pyglet.window.key.RIGHT in self.keys_held:
+            self.car_body.angular_velocity -= 0.5
+
+        if (pyglet.window.key.DOWN in self.keys_held and \
+                    abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
+            if pyglet.window.key.LSHIFT in self.keys_held: # Boost
+                self.left_wheel_b.angular_velocity += 8
+            else: # Regular
+                self.left_wheel_b.angular_velocity += 5
+        if (pyglet.window.key.UP in self.keys_held and \
+                    abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
+            if pyglet.window.key.LSHIFT in self.keys_held: # Boost
+                self.left_wheel_b.angular_velocity -= 8
+            else: # Regular
+                self.left_wheel_b.angular_velocity -= 5
+
+        if not pyglet.window.key.UP in self.keys_held and \
+                    not pyglet.window.key.DOWN in self.keys_held:
+            self.left_wheel_b.angular_velocity       *= .95 # fake friction for wheel 
+            self.right_wheel_b.angular_velocity      *= .95
+
+        if pyglet.window.key.SPACE in self.keys_held:
+            self.car_body.angular_velocity           *= 0.49

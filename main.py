@@ -16,7 +16,7 @@ import jellypolygon
 import bridge
 import particle
 import box
-import elevator
+import mobi
 from random import randrange,uniform
 pyglet.resource.path = ['resources','resources/images','resources/temp']
 pyglet.resource.reindex()
@@ -40,7 +40,7 @@ class FirstWindow(pyglet.window.Window):
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		self.map_zip = "levels/pyglettest5.zip"
+		self.map_zip = "levels/test1.zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.batch, 
 											self.parallaxBackground, self.levelBackground, self.levelForeground)
 		self.alpha_label = pyglet.text.Label(text = 'FragileTruck v0.0.1',
@@ -62,12 +62,12 @@ class FirstWindow(pyglet.window.Window):
 		self.trans_green = 125,250,175,200
 		self.trans_red = 255,125,125,200
 		self.trans_black = 25,25,25,200
-
-		self.boxes = box.Boxes(self.space, .1, (20,20), .5, (1300,700), 20, 0, 20, self.batch, self.levelForeground)
-		self.trap1 = elevator.TrapDoor(self.space, (180,500), (200,10), (-100,0), 
-													10, 100, 500, 100, 
+		'''
+		self.trap1 = mobi.ObjectPivot(self.space, (190,500), (220,10), (-110,0), 
+													10, 10, 500, 180, 
 													(80,200), 0, 1.5, 
 													self.batch, self.levelForeground)
+		'''
 		
 		# Vehicle Particles
 		self.vehicle_particles = particle.Particle(self.space, (0,0,0), self.batch, self.levelForeground)
@@ -95,8 +95,8 @@ class FirstWindow(pyglet.window.Window):
 		glClearColor(150,150,150,0)
 		self.batch.draw()
 		self.vehicle_particles.draw((150,50,50))
-		self.boxes.draw()
-		self.trap1.draw(self.player.car_body.position)
+		#self.boxes.draw()
+		#self.trap1.draw(self.player.car_body.position)
 
 		if self.debug == True:
 			self.player.debug_draw()
@@ -124,8 +124,6 @@ class FirstWindow(pyglet.window.Window):
 	def on_key_release(self, symbol, modifiers):
 		self.keys_held.pop(self.keys_held.index(symbol))
 	def keyboard_input(self, dt):
-		
-		self.player_max_ang_vel = 100
 
 		if pyglet.window.key.ESCAPE in self.keys_held: # exits the game
 			pyglet.app.exit()
@@ -135,33 +133,13 @@ class FirstWindow(pyglet.window.Window):
 			self.player.reset()
 			self.scroll_zoom = 0
 
-		if pyglet.window.key.LEFT in self.keys_held:
-			self.player.car_body.angular_velocity += 0.5
-		if pyglet.window.key.RIGHT in self.keys_held:
-			self.player.car_body.angular_velocity -= 0.5
-
-		# Movement
-		if (pyglet.window.key.DOWN in self.keys_held and \
-							abs(self.player.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
-			if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-				self.player.left_wheel_b.angular_velocity += 7
-			else: # Regular
-				self.player.left_wheel_b.angular_velocity += 3
-		if (pyglet.window.key.UP in self.keys_held and \
-							abs(self.player.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
-			if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-				self.player.left_wheel_b.angular_velocity -= 7
-			else: # Regular
-				self.player.left_wheel_b.angular_velocity -= 3
-
-		if not pyglet.window.key.UP in self.keys_held and not pyglet.window.key.DOWN in self.keys_held:
-			self.player.left_wheel_b.angular_velocity    	*= .95 # fake friction for wheel 
-			self.player.right_wheel_b.angular_velocity   	*= .95
+		self.player.controls(self.keys_held)
 
 		if pyglet.window.key.SPACE in self.keys_held:
-			self.player.car_body.angular_velocity 			*= 0.49
 			self.level.mobi_activate(self.player.car_body.position)
-			self.trap1.move(self.player.car_body.position)
+			#self.trap1.activate(self.player.car_body.position)
+		if not pyglet.window.key.SPACE in self.keys_held:
+			self.level.mobi_deactivate(self.player.car_body.position)
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		# hOLY SHIT DON'T TOUCH THIS ########################################################################################

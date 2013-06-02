@@ -32,9 +32,20 @@ pymunk.Segment(self.static_body, (1398,58), (1432,40), 4)
 pymunk.Segment(self.static_body, (1432,40), (1520,9), 4)
 pymunk.Segment(self.static_body, (1520,9), (1582,0), 4)
 bridge.Bridge(self.space, (485, 140), (40,5), 10, 10, self.batch, self.ordered_group_fg)
-bridge.Bridge(self.space, (875, 140), (30,5), 6, 0, self.batch, self.ordered_group_fg)
+#bridge.Bridge(self.space, (185, 540), (40,5), 20, 20, self.batch, self.ordered_group_fg)
+#bridge.Bridge(self.space, (875, 140), (30,5), 6, 0, self.batch, self.ordered_group_fg)
 bridge.Bridge(self.space, (1075, 640), (80,10), 12, 200, self.batch, self.ordered_group_fg)
-jelly.Jelly(self.space, (120,400), 30, 2, 3, (125,175,250,200), self.batch, self.ordered_group_fg)
-jelly.Jelly(self.space, (320,400), 20, 8, 4, (200,175,125,200), self.batch, self.ordered_group_fg)
-jelly.Jelly(self.space, (1220,400), 40, 10, 5, (250,125,125,200), self.batch, self.ordered_group_fg)
-elevator.Elevator(self.space, (200,170), (240,10), 200, 10, 10, 200, 200, self.batch, self.ordered_group_fg)
+
+jelly.Jelly(self.space, (1820,400), 20, 8, 4, (200,175,125,200), self.batch, self.ordered_group_fg)
+jelly.Jelly(self.space, (1720,400), 40, 10, 5, (250,125,125,200), self.batch, self.ordered_group_fg)
+
+mobi.Elevator(self.space, (2100,0), (240,10), 600, 20, 10, 10, 100, 4, self.batch, self.ordered_group_fg)
+
+mobi.ObjectPivot(self.space, (200,170), (180,10), (-90,0), 10, 20, 10, 300, .02, -10, 45, self.batch, self.ordered_group_fg)
+# This gives the same result, but reversed.
+mobi.ObjectPivot(self.space, (200,170), (180,10), (90,0), 10, 20, 10, 300, .02, 10, -25, self.batch, self.ordered_group_fg)
+
+box.Boxes(self.space, .1, (20,20), .5, (1300,700), 20, 0, 20, self.batch, self.ordered_group_fg)
+box.Boxes(self.space, .1, (10,10), .5, (1320,700), 40, 0, 10, self.batch, self.ordered_group_fg)
+box.Boxes(self.space, .1, (10,10), .5, (2300,14), 40, 0, 10, self.batch, self.ordered_group_fg)
+box.Boxes(self.space, .1, (10,10), .5, (110,300), 4, 0, 10, self.batch, self.ordered_group_fg)

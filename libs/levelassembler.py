@@ -1,16 +1,13 @@
-#import pygame
 import pyglet
 import pymunk
 from pymunk import Vec2d
-#from pymunk.pygame_util import draw_space, draw_segment
 import configparser
 import zipfile
-#import elevator
 import bridge
 import jelly
-import elevator
-#import time
-#import playerdetector
+import mobi
+import box
+
 class Game_Level:
 	def __init__(self, map_zip, space, batch, ordered_group_pbg, ordered_group_bg, ordered_group_fg):
 		self.batch = batch
@@ -49,7 +46,8 @@ class Game_Level:
 		self.elevators = []
 		self.bridges = []
 		self.jellies = []
-		self.elevators = []
+		self.mobis = []
+		self.boxes = []
 		self.detectors = []
 		self.space = space
 
@@ -84,10 +82,15 @@ class Game_Level:
 				line = eval(line)
 				self.jellies.append(line)
 				continue
-			if line.startswith("elevator"):
+			if line.startswith("mobi"):
 				print(line)
 				line = eval(line)
-				self.elevators.append(line)
+				self.mobis.append(line)
+				continue
+			if line.startswith("box.Boxes"):
+				print(line)
+				line = eval(line)
+				self.boxes.append(line)
 				continue
 
 			if line.startswith("playerdetector"):
@@ -140,8 +143,13 @@ class Game_Level:
 			line.draw()
 		for line in self.jellies:
 			line.draw()
-		for line in self.elevators:
+		for line in self.mobis:
 			line.draw(player_pos)
+		for line in self.boxes:
+			line.draw()
 	def mobi_activate(self, player_pos):
-		for line in self.elevators:
-			line.move(player_pos)
+		for line in self.mobis:
+			line.activate(player_pos)
+	def mobi_deactivate(self, player_pos):
+		for line in self.mobis:
+			line.deactivate(player_pos)
