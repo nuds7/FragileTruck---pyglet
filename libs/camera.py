@@ -1,6 +1,14 @@
 import pyglet
 from pyglet.gl import *
 from math import sin,cos,tan
+
+def worldMouse(mX, mY, cameraPosX, cameraPosY, camera_scale, screen_size):
+	aspect = screen_size[0]/screen_size[1]
+	wmX = (cameraPosX - (camera_scale*aspect)) + mX*((camera_scale*aspect)/screen_size[0])*2
+	wmY = (cameraPosY - (camera_scale)) + mY*((camera_scale)/screen_size[1])*2
+	wmPos = wmX, wmY
+	return wmPos
+
 class Camera(object):
 	def __init__ (self, screen_size, map_size, position):
 		self.position = position

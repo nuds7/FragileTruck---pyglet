@@ -12,7 +12,7 @@ class Jelly:
         self.bounciness = bounciness
         #self.map_size = map_size
         self.angle = 0
-        self.angle_to_add = .21
+        self.angle_to_add = .21 # .21
 
         self.mass               = 0.02
         self.center_radius      = 3
@@ -28,7 +28,7 @@ class Jelly:
         
         self.list = []
 
-        for i in range(30):
+        for i in range(30): # 30
             self.part_mass          = .002
             self.part_radius        = 8
             

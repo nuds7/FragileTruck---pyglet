@@ -48,11 +48,11 @@ class Circle:
         
 
 class Player:
-    def __init__(self, space, body_position, batch, enable_antenna=False):
+    def __init__(self, space, body_position, level_batch, level_foreground, level_foreground2):
         self.space = space
         #self.map_size = map_size
 
-        self.enable_antenna = enable_antenna
+        self.enable_antenna = False
         
         self.lcircle = Circle()
         self.rcircle = Circle()
@@ -168,45 +168,32 @@ class Player:
     
             self.antOutlineList = []
             for thing in self.ant_body_list:
-                self.antOutlineDraw = batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+                self.antOutlineDraw = level_batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
                 self.antOutlineList.append(self.antOutlineDraw)
     
         self.player_image = pyglet.resource.image("truck.png")
         self.player_image.anchor_x = self.player_image.width/2 +3
         self.player_image.anchor_y = self.player_image.height/2
-        self.player_sprite = pyglet.sprite.Sprite(self.player_image)
+        self.player_sprite = pyglet.sprite.Sprite(self.player_image, batch = level_batch, group = level_foreground2)
         self.player_sprite.scale = .5
 
         self.wheel_image = pyglet.resource.image("wheel.png")
         self.wheel_image.anchor_x = self.wheel_image.width/2
         self.wheel_image.anchor_y = self.wheel_image.height/2
-        self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image)
-        self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image)
+        self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground2)
+        self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground2)
         self.lwheel_sprite.scale = .5
         self.rwheel_sprite.scale = .5
-
-        self.lsustop_image = pyglet.resource.image("lsustop.png")
-        self.lsustop_image.anchor_x = self.lsustop_image.width/2 + self.wheel_base*2
-        self.lsustop_image.anchor_y = self.lsustop_image.height/2
-        self.lsustop_sprite = pyglet.sprite.Sprite(self.lsustop_image)
-
-        self.rsustop_image = pyglet.resource.image("rsustop.png")
-        self.rsustop_image.anchor_x = self.rsustop_image.width/2 - self.wheel_base*2
-        self.rsustop_image.anchor_y = self.rsustop_image.height/2
-        self.rsustop_sprite = pyglet.sprite.Sprite(self.rsustop_image)
-
-        self.lsustop_sprite.scale = .5
-        self.rsustop_sprite.scale = .5
 
         self.lsusbot_image = pyglet.resource.image("lsusbot.png")
         self.lsusbot_image.anchor_x = self.lsusbot_image.width/2 
         self.lsusbot_image.anchor_y = self.lsusbot_image.height/2 - 18
-        self.lsusbot_sprite = pyglet.sprite.Sprite(self.lsusbot_image)
+        self.lsusbot_sprite = pyglet.sprite.Sprite(self.lsusbot_image, batch = level_batch, group = level_foreground)
 
         self.rsusbot_image = pyglet.resource.image("rsusbot.png")
         self.rsusbot_image.anchor_x = self.rsusbot_image.width/2
         self.rsusbot_image.anchor_y = self.rsusbot_image.height/2 - 18
-        self.rsusbot_sprite = pyglet.sprite.Sprite(self.rsusbot_image)
+        self.rsusbot_sprite = pyglet.sprite.Sprite(self.rsusbot_image, batch = level_batch, group = level_foreground)
 
         self.lsusbot_sprite.scale = .5
         self.rsusbot_sprite.scale = .5
@@ -236,7 +223,8 @@ class Player:
         self.right_wheel_b.angular_velocity = 0
         self.right_wheel_b.angle            = 0
 
-    def mouse_grab_add(self, mouseX, mouseY):
+    def mouse_grab_add(self, mouse_coords):
+        mouseX, mouseY = mouse_coords
         if self.grabFirstClick == True:
             self.mouseBody = pymunk.Body()
             self.grabFirstClick = False
@@ -244,8 +232,8 @@ class Player:
         self.mouseGrabSpring = pymunk.constraint.DampedSpring(self.mouseBody, self.car_body, (0,0), (0,0), 0, 20, 1)
         self.space.add(self.mouseGrabSpring)
         self.mouseGrabbed = True
-    def mouse_grab_drag(self, mouseX, mouseY):
-        self.mouseBody.position = mouseX, mouseY
+    def mouse_grab_drag(self, mouse_coords):
+        self.mouseBody.position = mouse_coords
     def mouse_grab_release(self):
         self.space.remove(self.mouseGrabSpring)
         self.mouseGrabbed = False
@@ -267,25 +255,12 @@ class Player:
         self.rsusbot_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
         self.rsusbot_sprite.rotation = math.degrees(-self.car_body.angle)
 
-        self.lsusbot_sprite.draw()
-        self.rsusbot_sprite.draw()
-
-        self.lsustop_sprite.set_position(self.car_body.position[0], self.car_body.position[1])
-        self.lsustop_sprite.rotation = math.degrees(-self.car_body.angle)
-        self.rsustop_sprite.set_position(self.car_body.position[0], self.car_body.position[1])
-        self.rsustop_sprite.rotation = math.degrees(-self.car_body.angle)
-
-        self.lsustop_sprite.draw()
-        self.rsustop_sprite.draw()
-
-        self.player_sprite.draw()
-
         self.lwheel_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
         self.lwheel_sprite.rotation = math.degrees(-self.left_wheel_b.angle)
         self.rwheel_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
         self.rwheel_sprite.rotation = math.degrees(-self.right_wheel_b.angle)
-        self.lwheel_sprite.draw()
-        self.rwheel_sprite.draw()
+        #self.lwheel_sprite.draw()
+        #self.rwheel_sprite.draw()
 
         #self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
         #self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
@@ -368,5 +343,5 @@ class Player:
             self.left_wheel_b.angular_velocity       *= .95 # fake friction for wheel 
             self.right_wheel_b.angular_velocity      *= .95
 
-        if pyglet.window.key.SPACE in self.keys_held:
+        if pyglet.window.key.LCTRL in self.keys_held:
             self.car_body.angular_velocity           *= 0.49

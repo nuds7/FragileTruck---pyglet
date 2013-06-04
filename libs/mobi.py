@@ -4,9 +4,9 @@ from pymunk import Vec2d
 import math
 
 class Elevator:
-    def __init__(self, space, position, size, height, padding_left, padding_bottom, padding_right, padding_top, speed, batch, ordered_group):
+    def __init__(self, space, position, size, target, padding_left, padding_bottom, padding_right, padding_top, speed, batch, ordered_group):
         self.speed = speed
-        self.height = height
+        self.target = target
         self.space = space
         self.position = position
         mass = 1
@@ -23,15 +23,15 @@ class Elevator:
         joint = pymunk.constraint.PivotJoint(self.body, self.top_body, (0,0), (0,0))
         self.space.add(joint)
 
-        left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + height)
+        left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + target)
         bottom = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1] - padding_bottom)
         right = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1] - padding_bottom)
-        top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + height)
+        top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + target)
 
         self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
                             self.body.position[1] - padding_bottom,
                             self.top_body.position[0] + size[0]//2 + padding_right,
-                            self.top_body.position[1] + padding_top + height)
+                            self.top_body.position[1] + padding_top + target)
 
         self.outline = batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
         self.bb_outline = batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
@@ -66,7 +66,7 @@ class Elevator:
 
     def activate(self, player_pos):
         if self.bb.contains_vect(player_pos): 
-            if self.top_body.position[1] < self.position[1] + self.height:
+            if self.top_body.position[1] < self.position[1] + self.target:
                 self.top_body.position[1] += self.speed
     def deactivate(self, player_pos):
         if self.top_body.position[1] > self.position[1]:

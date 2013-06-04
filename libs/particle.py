@@ -51,7 +51,7 @@ class Particle:
 			self.particle_body_list.append(self.body)
 			self.particle_shape_list.append(self.shape)
 
-	def draw(self, color):
+	def draw(self):
 		self.particle_pos_list = []
 		if len(self.particle_body_list)//2 > 1:
 			for body in self.particle_body_list:
@@ -62,7 +62,7 @@ class Particle:
 
 		self.particle_line_list.resize(len(self.particle_pos_list)//2)
 		self.particle_line_list.vertices = self.particle_pos_list
-		self.particle_line_list.colors = (color*self.particle_line_list.count)
+		self.particle_line_list.colors = (self.color*self.particle_line_list.count)
 
 		'''
 		if len(self.particle_pos_list)//2 > 1:
