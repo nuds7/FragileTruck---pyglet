@@ -8,6 +8,17 @@ import jelly
 import mobi
 import box
 
+def map_image_loader(map_zip, location, placeholder):
+	location = location
+	try:
+		map_zip.extract(location, path = 'resources/temp')
+	except:
+		print('Failed to load %r' % location)
+		location = placeholder
+	return location
+
+
+
 class Game_Level:
 	def __init__(self, map_zip, space, debug_batch, level_batch, ordered_group_pbg, ordered_group_level, ordered_group_fg):
 		self.debugBatch = debug_batch
@@ -47,35 +58,18 @@ class Game_Level:
 		# Now that I extracted the images to the path resources/temp,
 		# resources/temp is not empty. That is why we reindex with 
 		# pyglet.resource.reindex after every time we unzip an image.
+
 		##
-		self.levelImage = str(self.mapConfig.get("Images", "LevelImage"))
-		try:
-			self.map_zip.extract(self.levelImage, path = 'resources/temp')
-		except:
-			print('Failed to load %r' % (self.levelImage))
-			self.levelImage = self.placeholderImage
+		self.levelImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "LevelImage")), self.placeholderImage)
 		##
-		self.parallaxImage = str(self.mapConfig.get("Images", "ParallaxImage"))
-		try:
-			self.map_zip.extract(self.parallaxImage, path = 'resources/temp')
-		except:
-			print('Failed to load %r' % (self.parallaxImage))
-			self.parallaxImage = self.placeholderImage
+		self.parallaxImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "ParallaxImage")), self.placeholderImage)
 		##
-		self.bridgeImage = str(self.mapConfig.get("Images", "BridgeImage"))
-		try:
-			self.map_zip.extract(self.bridgeImage, path = 'resources/temp')
-		except:
-			print('Failed to load %r' % (self.bridgeImage))
-			self.bridgeImage = self.placeholderImage
-		pyglet.resource.reindex()
+		self.bridgeImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "BridgeImage")), self.placeholderImage)
 		##
-		self.crateImage = str(self.mapConfig.get("Images", "CrateImage"))
-		try:
-			self.map_zip.extract(self.crateImage, path = 'resources/temp')
-		except:
-			print('Failed to load %r' % (self.crateImage))
-			self.crateImage = self.placeholderImage
+		self.crateImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "CrateImage")), self.placeholderImage)
+		##
+		self.elevatorImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "ElevatorImage")), self.placeholderImage)
+
 		pyglet.resource.reindex()
 		##
 
@@ -87,7 +81,8 @@ class Game_Level:
 		self.map_file = open(self.map_file)
 
 		self.space = space
-		self.static_body = pymunk.Body()
+		static_body = pymunk.Body()
+		dirt_body = pymunk.Body()
 
 		self.map_segments = [] # creates a list to hold segments contained in map file
 		self.elevators = []
@@ -110,8 +105,11 @@ class Game_Level:
 				line = eval(line) # converts string to an object ('segment' -> <segment>)
 				#print(line)
 				line.friction = .5
+				
 				line.group = 2
-				line.collision_type = 2
+				if line.body == dirt_body:
+					line.collision_type = 2
+				else: line.collision_type = 3
 				self.map_segments.append(line)
 				continue
 			if line.startswith("elevator"):
@@ -160,6 +158,8 @@ class Game_Level:
 
 		self.levelImage = pyglet.resource.image(self.levelImage)
 		self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
+		self.levelImage_sprite.x = -25
+		self.levelImage_sprite.y = -25
 		self.levelImage_sprite.scale = .5
 
 		self.map_zip.close()

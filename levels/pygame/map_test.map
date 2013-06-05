@@ -1,7 +1,0 @@
-# Boundry Lines
-pymunk.Segment(self.static_body, (0,0), (self.mapWidth,0), 2)
-pymunk.Segment(self.static_body, (0,self.mapHeight), (self.mapWidth,self.mapHeight), 2)
-pymunk.Segment(self.static_body, (0,0), (0,self.mapHeight), 2)
-pymunk.Segment(self.static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight), 2)
-# Level
-pymunk.Segment(self.static_body, (10,100), (200,200), 2)

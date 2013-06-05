@@ -33,7 +33,8 @@ class FirstWindow(pyglet.window.Window):
 		self.debug_batch = pyglet.graphics.Batch()
 		self.level_batch = pyglet.graphics.Batch()
 		self.ui_batch = pyglet.graphics.Batch()
-		
+
+		self.levelForeground3 	= pyglet.graphics.OrderedGroup(4)
 		self.levelForeground2 	= pyglet.graphics.OrderedGroup(3)
 		self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
 		self.levelBackground 	= pyglet.graphics.OrderedGroup(1)
@@ -44,7 +45,7 @@ class FirstWindow(pyglet.window.Window):
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		self.map_zip = "levels/test1.zip"
+		self.map_zip = "levels/test2.zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch,
 											self.parallaxBackground, self.levelBackground, self.levelForeground)
 		self.alpha_label = pyglet.text.Label(text = 'FragileTruck v0.0.1',
@@ -61,7 +62,7 @@ class FirstWindow(pyglet.window.Window):
 											batch = self.ui_batch)
 
 		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y), 
-									self.level_batch, self.levelForeground, self.levelForeground2)
+									self.level_batch, self.levelForeground, self.levelForeground2, self.levelForeground3)
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
 		self.trans_blue = 125,175,250,200
 		self.trans_green = 125,250,175,200
@@ -87,11 +88,11 @@ class FirstWindow(pyglet.window.Window):
 		self.space.step(0.015)
 		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
 		self.camera.update(self.player.car_body.position, 
-							(self.player_velocity/2 + 250 + self.scroll_zoom), 
+							(self.player_velocity/2 + self.scroll_zoom + self.height//4), 
 							sin(self.player.car_body.angle)*4, 
 							[10,10])
 		self.clear()
-		glClearColor(150,150,150,0)
+		glClearColor(20,50,20,0)
 		'''
 		if not self.debug:
 			self.player.draw()
@@ -101,11 +102,10 @@ class FirstWindow(pyglet.window.Window):
 			self.debug_batch.draw()
 		'''
 		self.player.draw()
-		self.debug_batch.draw()
 		self.level_batch.draw()
+		#self.debug_batch.draw()
+		#self.player.debug_draw() # LAGGY
 		self.vehicle_particles.draw()
-
-		
 
 		self.camera.hud_mode() # draw hud after this
 		self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
@@ -124,7 +124,7 @@ class FirstWindow(pyglet.window.Window):
 			if self.debug == False: 
 				self.debug = True
 			else: self.debug = False
-		
+	
 		if symbol == pyglet.window.key.R:
 			self.player.reset()
 			self.scroll_zoom = 0
@@ -172,5 +172,6 @@ class FirstWindow(pyglet.window.Window):
 				print("Zooming in by:", 30*abs(scroll_y))
 		
 if __name__ == '__main__':
+	#window = FirstWindow(1440,900, fullscreen = True, caption = 'FragileTruck v0.0.1')
 	window = FirstWindow(1280,720, caption = 'FragileTruck v0.0.1')
 	pyglet.app.run()

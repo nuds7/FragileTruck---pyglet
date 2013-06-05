@@ -4,14 +4,19 @@ from pymunk import Vec2d
 import math
 
 class Elevator:
-    def __init__(self, space, position, size, target, padding_left, padding_bottom, padding_right, padding_top, speed, batch, ordered_group):
-        self.speed = speed
+    def __init__(self, space, position, size, target, padding, speed, image, debug_batch, level_batch, ordered_group):
+        self.speed = abs(speed)
+        self.padding = padding
+        padding_left = self.padding[0]
+        padding_bottom = self.padding[1]
+        padding_right = self.padding[2]
+        padding_top = self.padding[3]
         self.target = target
         self.space = space
         self.position = position
         mass = 1
         self.body = pymunk.Body(mass, pymunk.inf)
-        self.body.position = (position[0], position[1])
+        self.body.position = position
         self.shape = pymunk.Poly.create_box(self.body, size)
         self.shape.friction = 1
         self.shape.group = 2
@@ -23,18 +28,28 @@ class Elevator:
         joint = pymunk.constraint.PivotJoint(self.body, self.top_body, (0,0), (0,0))
         self.space.add(joint)
 
-        left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + target)
-        bottom = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1] - padding_bottom)
-        right = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1] - padding_bottom)
-        top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + target)
+        if self.target > 0:
+            left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + target)
+            bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom)
+            right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom)
+            top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + target)
+            self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
+                                self.top_body.position[1] - padding_bottom,
+                                self.top_body.position[0] + size[0]//2 + padding_right,
+                                self.top_body.position[1] + padding_top + target)
+        if self.target < 0:
+            left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top)
+            bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom + target)
+            right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom + target)
+            top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top)
+            self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
+                                self.top_body.position[1] - padding_bottom + target,
+                                self.top_body.position[0] + size[0]//2 + padding_right,
+                                self.top_body.position[1] + padding_top)
+            self.speed *= -1
 
-        self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
-                            self.body.position[1] - padding_bottom,
-                            self.top_body.position[0] + size[0]//2 + padding_right,
-                            self.top_body.position[1] + padding_top + target)
-
-        self.outline = batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
-        self.bb_outline = batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
+        self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+        self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
                                             ('v2f', (left[0],left[1],
                                                      bottom[0],bottom[1],
                                                      right[0],right[1],
@@ -45,14 +60,19 @@ class Elevator:
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
 
-    def draw(self, player_pos):
+        #self.sprites = []
+        elevatorImage = pyglet.resource.image(image)
+        elevatorImage.anchor_x = elevatorImage.width/2
+        elevatorImage.anchor_y = elevatorImage.height/2
+        self.sprite = pyglet.sprite.Sprite(elevatorImage, batch = level_batch, group = ordered_group)
+        self.sprite.scale = .5
+        #self.sprites.append(sprite)
 
-        self.bb_outline.colors = (self.color*4)
+    def draw(self, player_pos):
+        if not self.bb.contains_vect(player_pos):
+            self.bb_outline.colors = (self.color*4)
         if self.bb.contains_vect(player_pos): 
             self.bb_outline.colors = (self.color2*4)
-
-        if self.body.position[1] >= self.top_body.position[1]:
-            self.bb_outline.colors = (self.color3*4)
         #iterNum = 0
         #for bp in self.outlineList:
         self.pPoints = self.shape.get_points()
@@ -64,15 +84,23 @@ class Elevator:
         #self.fillList[iterNum].vertices = self.p_list
         #iterNum += 1
 
+        self.sprite.set_position(self.body.position[0], self.body.position[1])
+        self.sprite.rotation = math.degrees(-self.body.angle)
+
     def activate(self, player_pos):
         if self.bb.contains_vect(player_pos): 
-            if self.top_body.position[1] < self.position[1] + self.target:
-                self.top_body.position[1] += self.speed
+            if self.target > 0:
+                if self.top_body.position[1] < self.position[1] + self.target:
+                    self.top_body.position[1] += self.speed
+            if self.target < 0:
+                if self.top_body.position[1] > self.position[1] + self.target:
+                    self.top_body.position[1] += self.speed
     def deactivate(self, player_pos):
-        if self.top_body.position[1] > self.position[1]:
-            if player_pos[1] < self.top_body.position[1] and self.bb.contains_vect(player_pos):
-                pass
-            else:
+        if self.target > 0:
+            if self.top_body.position[1] > self.position[1]:
+                self.top_body.position[1] -= self.speed
+        if self.target < 0:
+            if self.top_body.position[1] < self.position[1]:
                 self.top_body.position[1] -= self.speed
 
 class Flinger:

@@ -21,7 +21,7 @@ class Bridge:
 			self.segment_body              	= pymunk.Body(self.segment_mass, self.segment_inertia)
 			self.segment_body.position     	= self.starting_position[0]+self.add,self.starting_position[1]
 			self.segment_shape             	= pymunk.Poly.create_box(self.segment_body, self.segment_size)
-			self.segment_shape.friction    	= .5
+			self.segment_shape.friction    	= .8
 			self.segment_shape.group       	= 2
 
 			self.space.add(self.segment_body, self.segment_shape)

@@ -17,7 +17,7 @@ class Camera(object):
 		self.newPositionX = map_size[0]//2
 		self.newPositionY = map_size[1]//2
 		self.newAngle = 0
-		self.newWeightedScale = map_size[0]//4
+		self.newWeightedScale = screen_size[1]//2
 		self.newTarget = [0,0]
 	def update(self, target, scale, angle, rate):
 		self.target = target

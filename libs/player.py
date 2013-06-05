@@ -48,7 +48,7 @@ class Circle:
         
 
 class Player:
-    def __init__(self, space, body_position, level_batch, level_foreground, level_foreground2):
+    def __init__(self, space, body_position, level_batch, level_foreground, level_foreground2, level_foreground3):
         self.space = space
         #self.map_size = map_size
 
@@ -123,8 +123,8 @@ class Player:
         self.left_spring   = pymunk.constraint.DampedSpring(self.car_body, self.left_wheel_b, (-self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
         self.right_spring  = pymunk.constraint.DampedSpring(self.car_body, self.right_wheel_b, (self.wheel_base, 0), (0,0), self.rest_ln, self.stiff, self.damp)
 
-        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -10), (-self.wheel_base, -self.lift), (0,0))
-        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -10), (self.wheel_base, -self.lift), (0,0))
+        self.left_groove    = pymunk.constraint.GrooveJoint(self.car_body, self.left_wheel_b, (-self.wheel_base, -5), (-self.wheel_base, -self.lift), (0,0))
+        self.right_groove   = pymunk.constraint.GrooveJoint(self.car_body, self.right_wheel_b, (self.wheel_base, -5), (self.wheel_base, -self.lift), (0,0))
 
         self.space.add(self.left_spring, self.right_spring, self.left_groove, self.right_groove)
 
@@ -172,19 +172,27 @@ class Player:
                 self.antOutlineList.append(self.antOutlineDraw)
     
         self.player_image = pyglet.resource.image("truck.png")
-        self.player_image.anchor_x = self.player_image.width/2 +3
-        self.player_image.anchor_y = self.player_image.height/2
+        self.player_image.anchor_x = self.player_image.width/2 + 7
+        self.player_image.anchor_y = self.player_image.height/2 - 1
         self.player_sprite = pyglet.sprite.Sprite(self.player_image, batch = level_batch, group = level_foreground2)
         self.player_sprite.scale = .5
 
         self.wheel_image = pyglet.resource.image("wheel.png")
         self.wheel_image.anchor_x = self.wheel_image.width/2
         self.wheel_image.anchor_y = self.wheel_image.height/2
-        self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground2)
-        self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground2)
+        self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
+        self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
         self.lwheel_sprite.scale = .5
         self.rwheel_sprite.scale = .5
 
+        self.suspension_img = pyglet.resource.image("suspension.png")
+        self.suspension_img.anchor_x = self.suspension_img.width/2
+        self.suspension_img.anchor_y = 6
+        self.l_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
+        self.r_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
+        self.l_suspension_sprite.scale = .5
+        self.r_suspension_sprite.scale = .5
+        '''
         self.lsusbot_image = pyglet.resource.image("lsusbot.png")
         self.lsusbot_image.anchor_x = self.lsusbot_image.width/2 
         self.lsusbot_image.anchor_y = self.lsusbot_image.height/2 - 18
@@ -197,6 +205,7 @@ class Player:
 
         self.lsusbot_sprite.scale = .5
         self.rsusbot_sprite.scale = .5
+        '''
 
         self.mouseGrabbed = False
         self.grabFirstClick = True
@@ -249,22 +258,34 @@ class Player:
         self.player_sprite.set_position(self.sprite_x, self.sprite_y)
 
         self.player_sprite.rotation =  math.degrees(-self.car_body.angle)
-
+        '''
         self.lsusbot_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
         self.lsusbot_sprite.rotation = math.degrees(-self.car_body.angle)
         self.rsusbot_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
         self.rsusbot_sprite.rotation = math.degrees(-self.car_body.angle)
-
+        '''
         self.lwheel_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
         self.lwheel_sprite.rotation = math.degrees(-self.left_wheel_b.angle)
         self.rwheel_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
         self.rwheel_sprite.rotation = math.degrees(-self.right_wheel_b.angle)
+        
         #self.lwheel_sprite.draw()
         #self.rwheel_sprite.draw()
 
         #self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
         #self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
         #if self.car_body.is_sleeping: self.car_body.activate()
+
+        deltaYL = self.left_wheel_b.position[1] - self.car_body.position[1]
+        deltaXL = self.left_wheel_b.position[0] - self.car_body.position[0]
+        deltaYR = self.right_wheel_b.position[1] - self.car_body.position[1]
+        deltaXR = self.right_wheel_b.position[0] - self.car_body.position[0]
+
+        self.l_suspension_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
+        self.l_suspension_sprite.rotation = math.degrees(atan2(deltaYL,deltaXL)) *-1 - 90 #100 
+
+        self.r_suspension_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
+        self.r_suspension_sprite.rotation = math.degrees(atan2(deltaYR,deltaXR)) *-1 - 90 #80
 
         if self.enable_antenna:
             iterNum = 0
@@ -321,9 +342,9 @@ class Player:
     def controls(self, keys_held):
         self.keys_held = keys_held
         if pyglet.window.key.LEFT in self.keys_held:
-            self.car_body.angular_velocity += 0.5
+            self.car_body.angular_velocity += .65
         if pyglet.window.key.RIGHT in self.keys_held:
-            self.car_body.angular_velocity -= 0.5
+            self.car_body.angular_velocity -= .65
 
         if (pyglet.window.key.DOWN in self.keys_held and \
                     abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
