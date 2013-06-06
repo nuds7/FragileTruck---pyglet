@@ -45,6 +45,12 @@ pymunk.Segment(static_body, (838,197), (838,222), 7)
 
 pymunk.Segment(static_body, (738,222), (838,222), 7)
 
+pymunk.Segment(static_body, (1227,102), (1386,102), 7)
+pymunk.Segment(static_body, (1227,195), (1386,195), 7)
+
+pymunk.Segment(static_body, (1529,149), (1688,149), 7)
+
+mobi.ObjectPivot(self.space, (1459,149), (168.5,10.5), (78,0), (100, 50, 150, 100), .02, 17.5, -17.5, self.pivotImage, self.debugBatch, self.levelBatch, self.ordered_group_fg)
 
 bridge.Bridge(self.space, (860,103), (40,5), 10, 10, self.bridgeImage, self.debugBatch, self.levelBatch, self.ordered_group_fg)
 

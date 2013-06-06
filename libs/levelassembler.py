@@ -69,6 +69,8 @@ class Game_Level:
 		self.crateImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "CrateImage")), self.placeholderImage)
 		##
 		self.elevatorImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "ElevatorImage")), self.placeholderImage)
+		##
+		self.pivotImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "PivotImage")), self.placeholderImage)
 
 		pyglet.resource.reindex()
 		##

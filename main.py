@@ -103,7 +103,7 @@ class FirstWindow(pyglet.window.Window):
 		'''
 		self.player.draw()
 		self.level_batch.draw()
-		#self.debug_batch.draw()
+		self.debug_batch.draw()
 		#self.player.debug_draw() # LAGGY
 		self.vehicle_particles.draw()
 
