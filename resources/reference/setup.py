@@ -9,9 +9,9 @@ import os
 # all in the same directory.
 include_files = ['resources/','levels/','chipmunk.dll']
 includes = ['pymunk','configparser'] #'pyglet.clock', 'pyglet.resource', 'pyglet.graphics', 'pyglet.gl', 'pyglet.sprite', 'pyglet.image',
-excludes = []
+excludes = ['OpenGL']
 packages = ['pyglet']
-path = ['libs/']
+path = []#['libs/']
 
 
 setup( 	name = "Fragile Truck", 
@@ -24,11 +24,12 @@ setup( 	name = "Fragile Truck",
 							 'excludes':excludes,
 							 'packages':packages}
 							 },
-		executables = [Executable(path = path,
-								  script = "main.py", 
+		executables = [Executable(script = "main.py", 
 								  base = "Win32GUI", 
 								  targetName = "truck.exe",
 								  copyDependentFiles = True,
 								  #appendScriptToExe = True,
 								  #compress = True,
-								  )])
+								  #path = path,
+								  )]
+)

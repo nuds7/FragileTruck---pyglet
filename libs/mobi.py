@@ -3,6 +3,14 @@ import pymunk
 from pymunk import Vec2d
 import math
 
+def imageloader(image_file, placeholder):
+    try:
+        image = pyglet.resource.image(image_file)
+    except:
+        print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
+        image = pyglet.resource.image(placeholder)
+    return image
+
 class Elevator:
     def __init__(self, space, position, size, target, padding, speed, image, debug_batch, level_batch, ordered_group):
         self.speed = abs(speed)
@@ -61,7 +69,8 @@ class Elevator:
         self.color3 = (200,200,0)
 
         #self.sprites = []
-        elevatorImage = pyglet.resource.image(image)
+
+        elevatorImage = imageloader(image, 'placeholder.png')
         elevatorImage.anchor_x = elevatorImage.width/2
         elevatorImage.anchor_y = elevatorImage.height/2
         self.sprite = pyglet.sprite.Sprite(elevatorImage, batch = level_batch, group = ordered_group)
@@ -160,10 +169,10 @@ class ObjectPivot:
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
 
-        objectPivotImage = pyglet.resource.image(image)
-        objectPivotImage.anchor_x = objectPivotImage.width/2
-        objectPivotImage.anchor_y = objectPivotImage.height/2
-        self.sprite = pyglet.sprite.Sprite(objectPivotImage, batch = level_batch, group = ordered_group)
+        pivotImage = imageloader(image, 'placeholder.png')
+        pivotImage.anchor_x = pivotImage.width/2
+        pivotImage.anchor_y = pivotImage.height/2
+        self.sprite = pyglet.sprite.Sprite(pivotImage, batch = level_batch, group = ordered_group)
         self.sprite.scale = .5
 
     def draw(self, player_pos):

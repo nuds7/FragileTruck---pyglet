@@ -5,9 +5,6 @@ from pymunk import Vec2d
 import math
 from math import sin,cos,atan2,pi    
 
-        
-
-
 class Circle:
     def __init__ (self, radius=0, angle=0, position=(0,0), add=0):
         self.add = add

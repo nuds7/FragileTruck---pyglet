@@ -3,7 +3,7 @@ import pyglet
 import math
 
 class Boxes:
-	def __init__(self, space, mass, size, friction, position, amount, add, image, debug_batch, level_batch, ordered_group):
+	def __init__(self, space, position, size, mass, friction, amount, add, image, debug_batch, level_batch, ordered_group):
 		add_new_x = 0
 		add_new_y = 0
 		self.space = space
@@ -35,7 +35,11 @@ class Boxes:
 			self.fillList.append(self.fill)
 
 		self.sprites = []
-		crateImage = pyglet.resource.image(image)
+		try:
+			crateImage = pyglet.resource.image(image)
+		except:
+			print("Missing: "+str(image))
+			crateImage = pyglet.resource.image('placeholder.png')
 		crateImage.anchor_x = crateImage.width/2
 		crateImage.anchor_y = crateImage.height/2
 		for i in range(amount):

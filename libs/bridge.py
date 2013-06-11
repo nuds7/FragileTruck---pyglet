@@ -5,6 +5,14 @@ from pymunk import Vec2d
 import math
 from math import sin,cos
 
+def imageloader(image_file, placeholder):
+    try:
+        image = pyglet.resource.image(image_file)
+    except:
+        print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
+        image = pyglet.resource.image(placeholder)
+    return image
+
 class Bridge:
 	def __init__(self, space, starting_position, segment_size, amount, slack, image, debug_batch, level_batch, ordered_group):
 
@@ -74,13 +82,11 @@ class Bridge:
 		glPointSize(4)
 
 		self.sprites = []
-		bridgeImage = pyglet.resource.image(image)
+		
+		bridgeImage = imageloader(image, 'placeholder.png')
 		bridgeImage.anchor_x = bridgeImage.width/2
 		bridgeImage.anchor_y = bridgeImage.height/2
 		for i in range(amount):
-			bridgeImage = pyglet.resource.image(image)
-			bridgeImage.anchor_x = bridgeImage.width/2
-			bridgeImage.anchor_y = bridgeImage.height/2
 			sprite = pyglet.sprite.Sprite(bridgeImage, batch = level_batch, group = ordered_group)
 			sprite.scale = .5
 			self.sprites.append(sprite)

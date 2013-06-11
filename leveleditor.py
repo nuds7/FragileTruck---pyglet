@@ -7,6 +7,8 @@ import math
 from math import sin,cos,tan,degrees
 lib_path = os.path.abspath('libs/')
 sys.path.append(lib_path)
+levels_path = os.path.abspath('levels/')
+sys.path.append(levels_path)
 import camera
 import player
 import levelassembler
@@ -17,7 +19,8 @@ import bridge
 import particle
 import box
 import mobi
-import collectable
+import levelbuilder
+from datetime import datetime
 from random import randrange,uniform
 pyglet.resource.path = ['resources','resources/images','resources/temp','resources/temp/images']
 pyglet.resource.reindex()
@@ -30,6 +33,8 @@ class FirstWindow(pyglet.window.Window):
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_LINE_SMOOTH)
 		#self.set_vsync(False)
+		glPointSize(4)
+		glLineWidth(2)
 
 		self.debug_batch = pyglet.graphics.Batch()
 		self.level_batch = pyglet.graphics.Batch()
@@ -46,9 +51,13 @@ class FirstWindow(pyglet.window.Window):
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		self.map_zip = "levels/test3.zip"
+		selected_map = 'test3' # input("Map file to edit: ")
+
+		self.map_zip = "levels/"+str(selected_map)+".zip"
+
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch, self.ui_batch,
 											self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
+
 		self.alpha_label = pyglet.text.Label(text = 'FragileTruck v0.0.1',
 											font_name = 'Calibri', font_size = 8, bold = True,
 											x = self.width, y = 0, 
@@ -62,20 +71,9 @@ class FirstWindow(pyglet.window.Window):
 											color = (0,0,0,200),
 											batch = self.ui_batch)
 
-		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y), 
-									self.level_batch, self.levelForeground, self.levelForeground2, self.levelForeground3)
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
-		self.trans_blue = 125,175,250,200
-		self.trans_green = 125,250,175,200
-		self.trans_red = 255,125,125,200
-		self.trans_black = 25,25,25,200
 		
-		# Vehicle Particles
-		self.vehicle_particles = particle.Particle(self.space, (0,0,0), self.level_batch, self.levelForeground)
-		self.space.add_collision_handler(1,2,None,self.vehicle_particles.colliding, None, self.vehicle_particles.collided)
-
-		#self.collectable1 = collectable.Collectable((280,60), 10, 'coin.png', self.level_batch, self.ui_batch, self.levelForeground3)
-		#
+		#self.space.add_collision_handler(1,2,None,self.vehicle_particles.colliding, None, self.vehicle_particles.collided)
 
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
 		pyglet.clock.schedule_interval(self.update, 1/120.0) #updates pymunk stuff
@@ -83,27 +81,35 @@ class FirstWindow(pyglet.window.Window):
 		self.scroll_zoom = 0
 		self.keys_held = [] # maintain a list of keys held
 		self.debug = False
-		
-		self.score_label = pyglet.text.Label(text = 'x0',
-											font_name = 'Calibri', font_size = 12, bold = True,
-											x = 19, y = -3, 
+
+		self.cameraPosX = self.level.mapWidth//2
+		self.cameraPosY = self.level.mapHeight//2
+
+		self.builder = levelbuilder.LevelBuilder(self.debug_batch, self.levelForeground3, self.levelForeground2, self.levelForeground)
+		self.mode = 'None'
+		self.count = 0
+		self.drag_info = (0,0)
+
+		self.mode_label = pyglet.text.Label(text = self.mode,
+											font_name = 'Calibri', font_size = 8, bold = True,
+											x = 1, y = 0, 
 											anchor_x = 'left', anchor_y = 'bottom',
 											color = (0,0,0,255),
 											batch = self.ui_batch)
 
-
-		#self.mouse_verts = []
+		#self.elevatorBuilder
 
 	def on_draw(self):
-		self.level.update(self.player.car_body.position, (self.camera.newPositionX,self.camera.newPositionY))
+		self.level.update((self.cameraPosX,self.cameraPosY), (self.camera.newPositionX,self.camera.newPositionY))
 		self.space.step(0.015)
-		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
-		self.camera.update(self.player.car_body.position, 
-							(self.player_velocity/2 + self.scroll_zoom + self.height//4), 
-							sin(self.player.car_body.angle)*4, 
-							[20,15],20)
+
+		self.camera.update((self.cameraPosX,self.cameraPosY), 
+							(self.scroll_zoom + self.height//4), 
+							0, 
+							[5,5], 10)
+
 		self.clear()
-		glClearColor(20,50,20,0)
+		glClearColor(20,80,20,0)
 		'''
 		if not self.debug:
 			self.player.draw()
@@ -112,30 +118,24 @@ class FirstWindow(pyglet.window.Window):
 			self.player.debug_draw()
 			self.debug_batch.draw()
 		'''
-		self.player.draw()
 		self.level_batch.draw()
-		#zself.debug_batch.draw()
-		#self.player.debug_draw() # LAGGY
-		self.vehicle_particles.draw()
-
-		worldPos = camera.worldMouse(self.player.car_body.position[0], self.player.car_body.position[1], 
-									self.camera.newPositionX, self.camera.newPositionY, 
-									self.camera.newWeightedScale, (self.width,self.height))
-
-		#self.collectable1.update(self.player.car_body.position)
-		#self.totalScore = self.collectable1.score
-		self.score_label.text = 'x'+str(self.level.levelScore)
-
+		self.debug_batch.draw()
 		self.camera.hud_mode() # draw hud after this
 		self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
 		self.ui_batch.draw()
 
+		self.builder.update()
+		if self.mode == "Segment":
+			self.count = len(self.builder.segments_to_add)/2
+			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)+" | Position: "+str(self.drag_info)
+		if self.mode == "Collectable":
+			self.count = len(self.builder.collectables_to_add)
+			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)
+		if self.mode == "None":
+			self.mode_label.text = 'No editing mode selected. Press 1-2 to select a mode. Ctrl+Z to undo the last action in that mode. Ctrl+S to save.'
+
 	def update(self, dt):
-		#self.space.step(0.015)
-		if self.vehicle_particles.collidingBool and \
-				abs(self.player.left_wheel_b.angular_velocity) > 10 and abs(self.player.left_wheel_b.angular_velocity) < 60:
-			self.vehicle_particles.add((self.player.left_wheel_b.angular_velocity*2,uniform(20,abs(self.player.left_wheel_b.angular_velocity)*4)), 1)
-		self.vehicle_particles.cleanup(55)
+		pass
 
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)
@@ -143,52 +143,85 @@ class FirstWindow(pyglet.window.Window):
 			if self.debug == False: 
 				self.debug = True
 			else: self.debug = False
-	
 		if symbol == pyglet.window.key.R:
-			self.player.reset()
 			self.scroll_zoom = 0
-		if symbol == pyglet.window.key.C:
-			self.level.remove()
-		
-		
+
+		if symbol == pyglet.window.key._1:
+			self.mode = 'Segment'
+		if symbol == pyglet.window.key._2:
+			self.mode = 'Collectable'
+		if symbol == pyglet.window.key._0:
+			self.mode = 'None'
+
+		self.builder.write_to_file(symbol, modifiers)
+		self.builder.undo(symbol, modifiers, self.mode)
+
 	def on_key_release(self, symbol, modifiers):
 		self.keys_held.pop(self.keys_held.index(symbol))
-	def keyboard_input(self, dt):
-		self.player.controls(self.keys_held)
-		if pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_activate(self.player.car_body.position)
-		if not pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_deactivate(self.player.car_body.position)
 
+	def keyboard_input(self, dt):
 		if pyglet.window.key.ESCAPE in self.keys_held: # exits the game
 			pyglet.app.exit()
 			sys.exit() # fallback
+		if pyglet.window.key.SPACE in self.keys_held:
+			self.level.mobi_activate((self.cameraPosX,self.cameraPosY))
+		if not pyglet.window.key.SPACE in self.keys_held:
+			self.level.mobi_deactivate((self.cameraPosX,self.cameraPosY))
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
-									   self.camera.newWeightedScale, (self.width,self.height))
-		if button == 4:
-			self.player.mouse_grab_add(worldMouse)
+										   self.camera.newWeightedScale, (self.width,self.height))
+
+		if self.mode == 'Segment':
+			self.builder.add_segment(button, worldMouse)
+
+		if self.mode == 'Collectable':
+			self.builder.add_collectable(button, worldMouse)
+
+		if button == 1:
+			self.builder.clicked_pos = worldMouse
+			print(self.builder.clicked_pos)
+
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		aspect = (self.width/self.height)
-		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
-									   self.camera.newWeightedScale, (self.width,self.height))
+		# Free Camera
+		if self.cameraPosX < self.camera.newWeightedScale:
+			self.cameraPosX = self.camera.newWeightedScale
+		if self.cameraPosX > self.level.mapWidth - self.camera.newWeightedScale:
+			self.cameraPosX = self.level.mapWidth - self.camera.newWeightedScale
+		if self.cameraPosY < self.camera.newWeightedScale/aspect:
+			self.cameraPosY = (self.camera.newWeightedScale/aspect)
+		if self.cameraPosY > self.level.mapHeight - self.camera.newWeightedScale/aspect:
+			self.cameraPosY = self.level.mapHeight - (self.camera.newWeightedScale/aspect)
 		if buttons == 4:
-			self.player.mouse_grab_drag(worldMouse)
+			self.cameraPosX -= dx
+			self.cameraPosY -= dy
+		#
+		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
+										   self.camera.newWeightedScale, (self.width,self.height))
+		if self.mode == 'Segment':
+			if buttons == 1:
+				self.builder.guide(buttons, worldMouse)
+				self.drag_info = (int(worldMouse[0]),int(worldMouse[1]))
 
 	def on_mouse_release(self, x, y, button, modifiers):
-		if button == 4:
-			self.player.mouse_grab_release()
+		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
+										   self.camera.newWeightedScale, (self.width,self.height))
+		if self.mode == 'Segment':
+			self.builder.add_segment(button, worldMouse)
+	def on_mouse_motion(self, x, y, dx, dy):
+		pass
+
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		if self.camera.scale < self.level.mapHeight//2 and \
 					self.camera.scale < (self.level.mapWidth//2) / self.aspect:
 			if scroll_y <= -1.0:
-				self.scroll_zoom += 30*abs(scroll_y)
-				#print("Zooming out by:", 30*abs(scroll_y))
-		if self.camera.scale > 200:
+				self.scroll_zoom += 20*abs(scroll_y)
+				print("Zooming out by:", 20*abs(scroll_y))
+		if self.camera.scale > 100:
 			if scroll_y >= 1.0:
-				self.scroll_zoom -= 30*abs(scroll_y)
-				#print("Zooming in by:", 30*abs(scroll_y))
+				self.scroll_zoom -= 20*abs(scroll_y)
+				print("Zooming in by:", 20*abs(scroll_y))
 		
 if __name__ == '__main__':
 	#window = FirstWindow(1440,900, fullscreen = True, caption = 'FragileTruck v0.0.1')

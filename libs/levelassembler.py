@@ -7,20 +7,19 @@ import bridge
 import jelly
 import mobi
 import box
+import time
+import collectable
 
-def map_image_loader(map_zip, location, placeholder):
-	location = location
+def imageloader(image_file, placeholder):
 	try:
-		map_zip.extract(location, path = 'resources/temp')
+		image = pyglet.resource.image(image_file)
 	except:
-		print('Failed to load %r' % location)
-		location = placeholder
-	return location
-
-
+		print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
+		image = pyglet.resource.image(placeholder)
+	return image
 
 class Game_Level:
-	def __init__(self, map_zip, space, debug_batch, level_batch, ordered_group_pbg, ordered_group_level, ordered_group_fg):
+	def __init__(self, map_zip, space, debug_batch, level_batch, ui_batch, ordered_group_pbg, ordered_group_level, ordered_group_fg, ordered_group_fg3):
 		self.debugBatch = debug_batch
 		self.levelBatch = level_batch
 		self.ordered_group_pbg = ordered_group_pbg
@@ -28,12 +27,14 @@ class Game_Level:
 		self.ordered_group_fg = ordered_group_fg
 		################################ Map Config
 		self.map_zip = zipfile.ZipFile(map_zip)
-		self.map_config_file = self.map_zip.extract('map_config.cfg', path = 'temp')
+		#self.map_config_file = self.map_zip.extract('map_config.cfg', path = 'temp')
+		self.map_zip.extractall('resources/temp')
+		pyglet.resource.reindex()
 		#print(self.map_zip.namelist())
 
 		# Read the map's config
 		self.mapConfig = configparser.RawConfigParser()
-		self.mapConfig.read(self.map_config_file)
+		self.mapConfig.read('resources/temp/map_config.cfg')
 		self.mapName = self.mapConfig.get("MapConfig", "Name")
 		self.mapWidth = int(self.mapConfig.get("MapConfig","Width"))
 		self.mapHeight = int(self.mapConfig.get("MapConfig","Height"))
@@ -43,10 +44,6 @@ class Game_Level:
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
 		print("Starting Position: "+str(self.start_Position_X),str(self.start_Position_Y))
 		# Unzip failsafe placeholder image.
-		self.placeholderImage = 'images/placeholder.png'
-		self.map_zip.extract(self.placeholderImage, path = 'resources/temp')
-		pyglet.resource.reindex()
-
 		# Unzip map specific images.
 		# Tell pyglet to reindex its searchable paths
 		# without pyglet.resource.reindex(), the program
@@ -59,29 +56,11 @@ class Game_Level:
 		# resources/temp is not empty. That is why we reindex with 
 		# pyglet.resource.reindex after every time we unzip an image.
 
-		##
-		self.levelImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "LevelImage")), self.placeholderImage)
-		##
-		self.parallaxImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "ParallaxImage")), self.placeholderImage)
-		##
-		self.bridgeImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "BridgeImage")), self.placeholderImage)
-		##
-		self.crateImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "CrateImage")), self.placeholderImage)
-		##
-		self.elevatorImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "ElevatorImage")), self.placeholderImage)
-		##
-		self.pivotImage = map_image_loader(self.map_zip, str(self.mapConfig.get("Images", "PivotImage")), self.placeholderImage)
-
-		pyglet.resource.reindex()
-		##
-
 
 		################################ End Map Config
 
 		################################ Adding Static Lines
-		self.map_file = self.map_zip.extract('map_layout.map', path = 'temp')
-		self.map_file = open(self.map_file)
-
+		self.map_file = open('resources/temp/map_layout.map')
 		self.space = space
 		static_body = pymunk.Body()
 		dirt_body = pymunk.Body()
@@ -92,8 +71,8 @@ class Game_Level:
 		self.jellies = []
 		self.mobis = []
 		self.boxes = []
+		self.collectables = []
 		self.detectors = []
-		self.space = space
 
 		for line in self.map_file:
 			line = line.strip() # refer to http://programarcadegames.com/index.php?chapter=searching
@@ -139,7 +118,10 @@ class Game_Level:
 				line = eval(line)
 				self.boxes.append(line)
 				continue
-
+			if line.startswith("collectable.Collectable"):
+				line = eval(line)
+				self.collectables.append(line)
+				continue
 			if line.startswith("playerdetector"):
 				#print(line)
 				line = eval(line)
@@ -153,12 +135,12 @@ class Game_Level:
 			self.stuff = self.debugBatch.add(2, pyglet.gl.GL_LINES, ordered_group_fg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
-
-		self.parallaxImage = pyglet.resource.image(self.parallaxImage)
+		
+		self.parallaxImage = imageloader('parallax.png', 'placeholder.png')
 		self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
 		self.parallaxImage_sprite.scale = .5
 
-		self.levelImage = pyglet.resource.image(self.levelImage)
+		self.levelImage = imageloader('level.png', 'placeholder.png')
 		self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
 		self.levelImage_sprite.x = -25
 		self.levelImage_sprite.y = -25
@@ -166,6 +148,7 @@ class Game_Level:
 
 		self.map_zip.close()
 
+		self.levelScore = 0
 
 	def update(self, player_pos, camera_offset):
 		self.camera_offset = camera_offset
@@ -179,6 +162,9 @@ class Game_Level:
 			line.draw(player_pos)
 		for line in self.boxes:
 			line.draw()
+		for line in self.collectables:
+			line.update(player_pos)
+			self.levelScore += line.score
 	def mobi_activate(self, player_pos):
 		for line in self.mobis:
 			line.activate(player_pos)
