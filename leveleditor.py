@@ -105,8 +105,7 @@ class FirstWindow(pyglet.window.Window):
 
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 							(self.scroll_zoom + self.height//4), 
-							0, 
-							[5,5], 10)
+							0, [5,5], 10)
 
 		self.clear()
 		glClearColor(20,80,20,0)
@@ -218,7 +217,7 @@ class FirstWindow(pyglet.window.Window):
 			if scroll_y <= -1.0:
 				self.scroll_zoom += 20*abs(scroll_y)
 				print("Zooming out by:", 20*abs(scroll_y))
-		if self.camera.scale > 100:
+		if self.camera.scale > 50:
 			if scroll_y >= 1.0:
 				self.scroll_zoom -= 20*abs(scroll_y)
 				print("Zooming in by:", 20*abs(scroll_y))

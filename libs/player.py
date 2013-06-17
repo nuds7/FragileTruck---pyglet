@@ -1,4 +1,5 @@
 import pyglet
+from pyglet.gl import *
 #import pygame
 import pymunk
 from pymunk import Vec2d
@@ -72,7 +73,7 @@ class Player:
         self.shape_list = []
         for part in self.parts:
             self.part = pymunk.Poly(self.car_body, part)
-            self.part.friction = 0.5
+            self.part.friction = 0.3 #0.5
             self.part.group    = 1  # so that the wheels and the body do not collide with eachother
             self.space.add(self.part)
             self.shape_list.append(self.part)
@@ -173,6 +174,8 @@ class Player:
         self.player_image.anchor_y = self.player_image.height/2 - 1
         self.player_sprite = pyglet.sprite.Sprite(self.player_image, batch = level_batch, group = level_foreground2)
         self.player_sprite.scale = .5
+        playertex = self.player_image.get_texture()
+        glTexParameteri(playertex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
         self.wheel_image = pyglet.resource.image("wheel.png")
         self.wheel_image.anchor_x = self.wheel_image.width/2
@@ -229,7 +232,7 @@ class Player:
         self.right_wheel_b.angular_velocity = 0
         self.right_wheel_b.angle            = 0
 
-    def mouse_grab_add(self, mouse_coords):
+    def mouse_grab_press(self, mouse_coords):
         mouseX, mouseY = mouse_coords
         if self.grabFirstClick == True:
             self.mouseBody = pymunk.Body()

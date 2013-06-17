@@ -1,9 +1,18 @@
 import pymunk
 import pyglet
+from pyglet.gl import *
 import math
 
+def imageloader(image_file, placeholder):
+	try:
+		image = pyglet.resource.image(image_file)
+	except:
+		print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
+		image = pyglet.resource.image(placeholder)
+	return image
+
 class Boxes:
-	def __init__(self, space, position, size, mass, friction, amount, add, image, debug_batch, level_batch, ordered_group):
+	def __init__(self, space, position, size, mass, friction, amount, add, image):
 		add_new_x = 0
 		add_new_y = 0
 		self.space = space
@@ -24,28 +33,36 @@ class Boxes:
 			add_new_x += add[0]
 			add_new_y += add[1]
 
+		self.sprites = []
+		image = imageloader(image, 'placeholder.png')
+		image.anchor_x = image.width/2
+		image.anchor_y = image.height/2
+		texture = image.get_texture()
+		glTexParameteri(image.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		for i in range(amount):
+			sprite = pyglet.sprite.Sprite(image)
+			sprite.scale = .5
+			self.sprites.append(sprite)
+
+	def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
+
 		self.outlineList = []
 		for thing in self.shape_list:
-			self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+			self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
 			self.outlineList.append(self.outline)
 
 		self.fillList = []
 		for thing in self.shape_list:
-			self.fill = debug_batch.add_indexed(4, pyglet.gl.GL_TRIANGLES, ordered_group, [0,1,2,2,3,0], ('v2f'), ('c4B', (200,200,200,100)*4))
+			self.fill = debug_batch.add_indexed(4, pyglet.gl.GL_TRIANGLES, None, [0,1,2,2,3,0], ('v2f'), ('c4B', (200,200,200,100)*4))
 			self.fillList.append(self.fill)
 
-		self.sprites = []
-		try:
-			crateImage = pyglet.resource.image(image)
-		except:
-			print("Missing: "+str(image))
-			crateImage = pyglet.resource.image('placeholder.png')
-		crateImage.anchor_x = crateImage.width/2
-		crateImage.anchor_y = crateImage.height/2
-		for i in range(amount):
-			sprite = pyglet.sprite.Sprite(crateImage, batch = level_batch, group = ordered_group)
-			sprite.scale = .5
-			self.sprites.append(sprite)
+		for thing in self.outlineList:
+			thing.batch = debug_batch
+		for thing in self.fillList:
+			thing.batch = debug_batch
+		for sprite in self.sprites:
+			sprite.batch = level_batch
+			sprite.group = ordered_group
 
 	def draw(self):
 		iterNum = 0

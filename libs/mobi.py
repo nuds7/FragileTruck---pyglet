@@ -12,7 +12,7 @@ def imageloader(image_file, placeholder):
     return image
 
 class Elevator:
-    def __init__(self, space, position, size, target, padding, speed, image, debug_batch, level_batch, ordered_group):
+    def __init__(self, space, position, size, target, padding, speed, image):
         self.speed = abs(speed)
         self.padding = padding
         padding_left = self.padding[0]
@@ -37,25 +37,25 @@ class Elevator:
         self.space.add(joint)
 
         if self.target > 0:
-            left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + target)
-            bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom)
-            right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom)
-            top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + target)
+            self.left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top + target)
+            self.bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom)
+            self.right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom)
+            self.top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top + target)
             self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
                                 self.top_body.position[1] - padding_bottom,
                                 self.top_body.position[0] + size[0]//2 + padding_right,
                                 self.top_body.position[1] + padding_top + target)
         if self.target < 0:
-            left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top)
-            bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom + target)
-            right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom + target)
-            top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top)
+            self.left = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] + padding_top)
+            self.bottom = (self.top_body.position[0] - size[0]//2 - padding_left, self.top_body.position[1] - padding_bottom + target)
+            self.right = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] - padding_bottom + target)
+            self.top = (self.top_body.position[0] + size[0]//2 + padding_right, self.top_body.position[1] + padding_top)
             self.bb = pymunk.BB(self.top_body.position[0] - size[0]//2 - padding_left,
                                 self.top_body.position[1] - padding_bottom + target,
                                 self.top_body.position[0] + size[0]//2 + padding_right,
                                 self.top_body.position[1] + padding_top)
             self.speed *= -1
-
+        '''
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
         self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
                                             ('v2f', (left[0],left[1],
@@ -63,7 +63,7 @@ class Elevator:
                                                      right[0],right[1],
                                                      top[0],top[1])),
                                             ('c3B', (0,0,0)*4))
-
+        '''
         self.color = (200,0,0)
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
@@ -73,9 +73,20 @@ class Elevator:
         elevatorImage = imageloader(image, 'placeholder.png')
         elevatorImage.anchor_x = elevatorImage.width/2
         elevatorImage.anchor_y = elevatorImage.height/2
-        self.sprite = pyglet.sprite.Sprite(elevatorImage, batch = level_batch, group = ordered_group)
+        self.sprite = pyglet.sprite.Sprite(elevatorImage)# , batch = level_batch, group = ordered_group)
         self.sprite.scale = .5
         #self.sprites.append(sprite)
+
+    def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
+        self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+        self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
+                                            ('v2f', (self.left[0],self.left[1],
+                                                     self.bottom[0],self.bottom[1],
+                                                     self.right[0],self.right[1],
+                                                     self.top[0],self.top[1])),
+                                            ('c3B', (0,0,0)*4))
+        self.sprite.batch = level_batch
+        self.sprite.group = ordered_group
 
     def draw(self, player_pos):
         if not self.bb.contains_vect(player_pos):
@@ -116,7 +127,7 @@ class ObjectPivot:
     def __init__(self, space, position, size, hinge_pos, 
                  padding, 
                  ang_vel, start, end, 
-                 image, debug_batch, level_batch, ordered_group):
+                 image):
         self.padding = padding
         padding_left = self.padding[0]
         padding_bottom = self.padding[1]
@@ -147,16 +158,16 @@ class ObjectPivot:
         gear = pymunk.constraint.GearJoint(self.body, self.hinge_body, 1.0, 1.0)
         self.space.add(gear)
 
-        left = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1] + padding_top)
-        bottom = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1]- padding_bottom)
-        right = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1]- padding_bottom)
-        top = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1] + padding_top)
+        self.left = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1] + padding_top)
+        self.bottom = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1]- padding_bottom)
+        self.right = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1]- padding_bottom)
+        self.top = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1] + padding_top)
 
         self.bb = pymunk.BB(self.body.position[0] - size[0]//2 - padding_left,
                             self.body.position[1] - padding_bottom,
                             self.body.position[0] + size[0]//2 + padding_right,
                             self.body.position[1] + padding_top)
-
+        '''
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
         self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
                                             ('v2f', (left[0],left[1],
@@ -164,7 +175,7 @@ class ObjectPivot:
                                                      right[0],right[1],
                                                      top[0],top[1])),
                                             ('c3B', (0,0,0)*4))
-
+        '''
         self.color = (200,0,0)
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
@@ -172,8 +183,19 @@ class ObjectPivot:
         pivotImage = imageloader(image, 'placeholder.png')
         pivotImage.anchor_x = pivotImage.width/2
         pivotImage.anchor_y = pivotImage.height/2
-        self.sprite = pyglet.sprite.Sprite(pivotImage, batch = level_batch, group = ordered_group)
+        self.sprite = pyglet.sprite.Sprite(pivotImage) # batch = level_batch, group = ordered_group)
         self.sprite.scale = .5
+
+    def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
+        self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+        self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
+                                            ('v2f', (self.left[0],self.left[1],
+                                                     self.bottom[0],self.bottom[1],
+                                                     self.right[0],self.right[1],
+                                                     self.top[0],self.top[1])),
+                                            ('c3B', (0,0,0)*4))
+        self.sprite.batch = level_batch
+        self.sprite.group = ordered_group
 
     def draw(self, player_pos):
 

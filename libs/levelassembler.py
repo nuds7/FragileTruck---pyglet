@@ -1,4 +1,5 @@
 import pyglet
+from pyglet.gl import *
 import pymunk
 from pymunk import Vec2d
 import configparser
@@ -19,7 +20,8 @@ def imageloader(image_file, placeholder):
 	return image
 
 class Game_Level:
-	def __init__(self, map_zip, space, debug_batch, level_batch, ui_batch, ordered_group_pbg, ordered_group_level, ordered_group_fg, ordered_group_fg3):
+	def __init__(self, map_zip, space, debug_batch, level_batch, ui_batch, 
+				ordered_group_pbg, ordered_group_level, ordered_group_fg, ordered_group_fg3):
 		self.debugBatch = debug_batch
 		self.levelBatch = level_batch
 		self.ordered_group_pbg = ordered_group_pbg
@@ -40,9 +42,11 @@ class Game_Level:
 		self.mapHeight = int(self.mapConfig.get("MapConfig","Height"))
 		self.start_Position_X = int(self.mapConfig.get("MapConfig", "Player_Start_Position_X"))
 		self.start_Position_Y = int(self.mapConfig.get("MapConfig", "Player_Start_Position_Y"))
+		self.lowres = str(self.mapConfig.get("MapConfig", "LowRes"))
 		print("Name: "+self.mapName)
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
 		print("Starting Position: "+str(self.start_Position_X),str(self.start_Position_Y))
+		print("LowRes: "+str(self.lowres))
 		# Unzip failsafe placeholder image.
 		# Unzip map specific images.
 		# Tell pyglet to reindex its searchable paths
@@ -135,20 +139,53 @@ class Game_Level:
 			self.stuff = self.debugBatch.add(2, pyglet.gl.GL_LINES, ordered_group_fg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
-		
-		self.parallaxImage = imageloader('parallax.png', 'placeholder.png')
-		self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-		self.parallaxImage_sprite.scale = .5
 
-		self.levelImage = imageloader('level.png', 'placeholder.png')
-		self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
-		self.levelImage_sprite.x = -25
-		self.levelImage_sprite.y = -25
-		self.levelImage_sprite.scale = .5
+		if self.lowres == 'True':
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			self.parallaxImage = imageloader('parallaxlow.png', 'placeholder.png')
+			self.parallaxImage.width = self.parallaxImage.width//2
+			self.parallaxImage.height = self.parallaxImage.height//2
+			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
+			#self.parallaxImage_sprite.scale = .5
+			self.levelImage = imageloader('levellow.png', 'placeholder.png')
+			#self.levelImage.width = self.levelImage.width//2
+			#self.levelImage.height = self.levelImage.height//2
+			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
+			self.levelImage_sprite.x = -25
+			self.levelImage_sprite.y = -25
+			leveltex = self.levelImage.get_texture()
+			glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			#self.levelImage_sprite.scale = .5
+		elif self.lowres == 'False':
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			self.parallaxImage = imageloader('parallax.png', 'placeholder.png')
+			self.parallaxImage.width = self.parallaxImage.width//2
+			self.parallaxImage.height = self.parallaxImage.height//2
+			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
+			#self.parallaxImage_sprite.scale = .5
+			self.levelImage = imageloader('level.png', 'placeholder.png')
+			self.levelImage.width = self.levelImage.width//2
+			self.levelImage.height = self.levelImage.height//2
+			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
+			self.levelImage_sprite.x = -25
+			self.levelImage_sprite.y = -25
+		else:
+			print("Error with boolean 'LowRes.' '"+str(self.lowres)+"' is not a correct value. LowRes must equal either 'True' or 'False.'")
+	
+			#leveltex = self.levelImage.get_texture()
+			#glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			#self.levelImage_sprite.scale = .5
 
 		self.map_zip.close()
 
-		self.levelScore = 0
+		for line in self.collectables:
+			line.setup_pyglet_batch(level_batch, ui_batch, ordered_group_fg3)
+		for line in self.boxes:
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+		for line in self.mobis:
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+
+		#self.levelScore = 0
 
 	def update(self, player_pos, camera_offset):
 		self.camera_offset = camera_offset
@@ -163,8 +200,8 @@ class Game_Level:
 		for line in self.boxes:
 			line.draw()
 		for line in self.collectables:
-			line.update(player_pos)
-			self.levelScore += line.score
+			index = self.collectables.index(line)
+			line.update(player_pos, index*(line.image.width*.66))
 	def mobi_activate(self, player_pos):
 		for line in self.mobis:
 			line.activate(player_pos)

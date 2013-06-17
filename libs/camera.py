@@ -1,5 +1,7 @@
 import pyglet
 from pyglet.gl import *
+glEnable(GL_TEXTURE_2D)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 from math import sin,cos,tan
 
 def worldMouse(mX, mY, cameraPosX, cameraPosY, camera_scale, screen_size):
@@ -17,7 +19,7 @@ class Camera(object):
 		self.newPositionX = map_size[0]//2
 		self.newPositionY = map_size[1]//2
 		self.newAngle = 0
-		self.newWeightedScale = screen_size[1]//2
+		self.newWeightedScale = screen_size[1]
 		self.newTarget = [0,0]
 	def update(self, target, scale, angle, rate, scaleRate):
 		self.target = target

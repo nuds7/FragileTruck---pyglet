@@ -62,7 +62,7 @@ class LevelBuilder:
 
 			for v in self.collectables_to_add:
 				print("Collectables at points",str(v[0]),",",str(v[1]))
-				map_file.write("collectable.Collectable(("+str(v[0])+", "+str(v[1])+"), 1, 'coin.png', level_batch, ui_batch, ordered_group_fg3)\n")
+				map_file.write("collectable.Collectable(("+str(v[0])+", "+str(v[1])+"), [127,127,127], 'wrench.png')\n")
 
 			if len(self.collectable_points) == 0:
 				print("No collectables were written.")
@@ -86,6 +86,8 @@ class LevelBuilder:
 					print("Removed physical",str(self.segments_to_add.pop()),str(self.segments_to_add.pop()))
 					print("Removed draw points", str(self.segment_points.pop()),str(self.segment_points.pop()),
 						   str(self.segment_points.pop()),str(self.segment_points.pop()))
+					self.guide_line_draw.vertices = [0,0,0,0]
+
 		if mode == 'Collectable':
 			if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.Z:
 				if len(self.collectables_to_add) > 0:
