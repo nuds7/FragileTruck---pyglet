@@ -49,7 +49,7 @@ class FirstWindow(pyglet.window.Window):
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		self.map_zip = "levels/test3.zip"
+		self.map_zip = "levels/dkcopy.zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch, self.ui_batch,
 											self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
 		self.alpha_label = pyglet.text.Label(text = 'FragileTruck v0.0.1',
@@ -80,18 +80,22 @@ class FirstWindow(pyglet.window.Window):
 		self.debug = False
 
 	def on_draw(self):
-		self.level.update(self.player.car_body.position, (self.camera.newPositionX,self.camera.newPositionY))
 		self.space.step(0.015)
+		self.level.update(self.player.car_body.position, 
+						  (self.camera.newPositionX,self.camera.newPositionY),
+						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale),
+						  self.keys_held)
 		self.player_velocity = abs(self.player.car_body.velocity[0]/3.5) + abs(self.player.car_body.velocity[1]/4.5)
 		self.camera.update(self.player.car_body.position, 
 							(self.player_velocity/2 + self.scroll_zoom + self.height//4), 
 							sin(self.player.car_body.angle)*4, 
 							[20,15],20)
+		
 		self.clear()
 		glClearColor(20,50,20,0)
 		self.player.draw()
 		self.level_batch.draw()
-		#self.debug_batch.draw()
+		self.debug_batch.draw()
 		#self.player.debug_draw() # LAGGY
 		self.vehicle_particles.draw()
 
@@ -119,6 +123,8 @@ class FirstWindow(pyglet.window.Window):
 		if symbol == pyglet.window.key.R:
 			self.player.reset()
 			self.scroll_zoom = 0
+		if symbol == pyglet.window.key.T:
+			self.scroll_zoom = self.height//4
 		if symbol == pyglet.window.key.C:
 			self.level.remove()
 		
@@ -128,11 +134,6 @@ class FirstWindow(pyglet.window.Window):
 
 	def keyboard_input(self, dt):
 		self.player.controls(self.keys_held)
-		if pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_activate(self.player.car_body.position)
-		if not pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_deactivate(self.player.car_body.position)
-
 		if pyglet.window.key.ESCAPE in self.keys_held: # exits the game
 			pyglet.app.exit()
 			sys.exit() # fallback
@@ -163,5 +164,5 @@ class FirstWindow(pyglet.window.Window):
 				#print("Zooming in by:", 30*abs(scroll_y))
 		
 if __name__ == '__main__':
-	window = FirstWindow(1280,720, caption = 'FragileTruck v0.0.1')
+	window = FirstWindow(1280, 720, caption = 'FragileTruck v0.0.1', fullscreen=False)
 	pyglet.app.run()

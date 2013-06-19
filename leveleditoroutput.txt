@@ -1,26 +1,5 @@
-
-# 2013-06-11 15:55:02.680000 #
-collectable.Collectable((279.0000000000003, 42.00000000000015), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((314.50000000000034, 41.50000000000015), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((347.00000000000034, 41.50000000000015), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-# 2013-06-11 15:55:26.807000 #
-collectable.Collectable((650.9999999999998, 134.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((816.4999999999999, 134.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((785.4999999999999, 133.50000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((751.9999999999998, 134.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((719.9999999999998, 134.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((683.9999999999998, 133.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-# 2013-06-11 15:55:49.152000 #
-collectable.Collectable((1265.9999999987608, 141.00000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1342.9999999999998, 137.50000000000023), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1660.9999999994818, 180.50000000000028), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1562.9999999999995, 180.50000000000028), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1353.9999999999995, 225.0000000000003), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1305.4999999999995, 227.5000000000003), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1251.9999999999993, 224.5000000000003), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-# 2013-06-11 15:55:58.783000 #
-collectable.Collectable((1810.996132798999, 54.50000000000016), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((1935.4999999994916, 57.00000000000016), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((2091.499999418017, 55.50000000000016), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((2210.999999999999, 51.000000000000156), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
-collectable.Collectable((2358.4999982820937, 45.500000000000156), [127,127,127], 'wrench.png', level_batch, ui_batch, ordered_group_fg3)
+# 2013-06-17 19:42:56.913000 #
+pymunk.Segment(static_body, (1121.833333333334, 461.99999999999983), (1011.0000000000003, 462.1666666666665), 4)
+pymunk.Segment(static_body, (895.1111111111125, 526.833333333331), (895.1111111111109, 369.3333333333332), 4)
+# 2013-06-18 18:12:03.573000 #
+# 2013-06-18 18:40:11.061000 #

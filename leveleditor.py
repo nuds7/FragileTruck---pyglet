@@ -45,14 +45,13 @@ class FirstWindow(pyglet.window.Window):
 		self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
 		self.levelBackground 	= pyglet.graphics.OrderedGroup(1)
 		self.parallaxBackground = pyglet.graphics.OrderedGroup(0)
-		self.fps_display = pyglet.clock.ClockDisplay()
+		#self.fps_display = pyglet.clock.ClockDisplay()
 		self.space = pymunk.Space()
 		self.space.enable_contact_graph = True
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		selected_map = 'test3' # input("Map file to edit: ")
-
+		selected_map = 'dkcopy' # input("Map file to edit: ")
 		self.map_zip = "levels/"+str(selected_map)+".zip"
 
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch, self.ui_batch,
@@ -96,27 +95,28 @@ class FirstWindow(pyglet.window.Window):
 											anchor_x = 'left', anchor_y = 'bottom',
 											color = (0,0,0,255),
 											batch = self.ui_batch)
+		self.pos_label = pyglet.text.Label(text = '',
+											font_name = 'Calibri', font_size = 8, bold = True,
+											x = 1, y = self.height-11, 
+											anchor_x = 'left', anchor_y = 'bottom',
+											color = (0,0,0,200),
+											batch = self.ui_batch)
 
 		#self.elevatorBuilder
 
 	def on_draw(self):
-		self.level.update((self.cameraPosX,self.cameraPosY), (self.camera.newPositionX,self.camera.newPositionY))
+		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 
+						  (self.camera.newPositionX,self.camera.newPositionY),
+						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale), 
+						  self.keys_held)
 		self.space.step(0.015)
 
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 							(self.scroll_zoom + self.height//4), 
 							0, [5,5], 10)
-
 		self.clear()
 		glClearColor(20,80,20,0)
-		'''
-		if not self.debug:
-			self.player.draw()
-			self.level_batch.draw()
-		else:
-			self.player.debug_draw()
-			self.debug_batch.draw()
-		'''
+
 		self.level_batch.draw()
 		self.debug_batch.draw()
 		self.camera.hud_mode() # draw hud after this
@@ -144,6 +144,8 @@ class FirstWindow(pyglet.window.Window):
 			else: self.debug = False
 		if symbol == pyglet.window.key.R:
 			self.scroll_zoom = 0
+		if symbol == pyglet.window.key.T:
+			self.scroll_zoom = self.height//4
 
 		if symbol == pyglet.window.key._1:
 			self.mode = 'Segment'
@@ -162,10 +164,6 @@ class FirstWindow(pyglet.window.Window):
 		if pyglet.window.key.ESCAPE in self.keys_held: # exits the game
 			pyglet.app.exit()
 			sys.exit() # fallback
-		if pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_activate((self.cameraPosX,self.cameraPosY))
-		if not pyglet.window.key.SPACE in self.keys_held:
-			self.level.mobi_deactivate((self.cameraPosX,self.cameraPosY))
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
@@ -173,7 +171,6 @@ class FirstWindow(pyglet.window.Window):
 
 		if self.mode == 'Segment':
 			self.builder.add_segment(button, worldMouse)
-
 		if self.mode == 'Collectable':
 			self.builder.add_collectable(button, worldMouse)
 
@@ -184,17 +181,12 @@ class FirstWindow(pyglet.window.Window):
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		aspect = (self.width/self.height)
 		# Free Camera
-		if self.cameraPosX < self.camera.newWeightedScale:
-			self.cameraPosX = self.camera.newWeightedScale
-		if self.cameraPosX > self.level.mapWidth - self.camera.newWeightedScale:
-			self.cameraPosX = self.level.mapWidth - self.camera.newWeightedScale
-		if self.cameraPosY < self.camera.newWeightedScale/aspect:
-			self.cameraPosY = (self.camera.newWeightedScale/aspect)
-		if self.cameraPosY > self.level.mapHeight - self.camera.newWeightedScale/aspect:
-			self.cameraPosY = self.level.mapHeight - (self.camera.newWeightedScale/aspect)
+		self.cameraPos = self.camera.edge_bounce(dx,dy,[self.cameraPosX,self.cameraPosY])
+		self.cameraPosX = self.cameraPos[0]
+		self.cameraPosY = self.cameraPos[1]
 		if buttons == 4:
-			self.cameraPosX -= dx
-			self.cameraPosY -= dy
+			self.cameraPosX -= dx*((self.camera.newWeightedScale*aspect)/(self.width/2))
+			self.cameraPosY -= dy*((self.camera.newWeightedScale)/(self.height/2))
 		#
 		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
 										   self.camera.newWeightedScale, (self.width,self.height))
@@ -209,7 +201,9 @@ class FirstWindow(pyglet.window.Window):
 		if self.mode == 'Segment':
 			self.builder.add_segment(button, worldMouse)
 	def on_mouse_motion(self, x, y, dx, dy):
-		pass
+		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
+										   self.camera.newWeightedScale, (self.width,self.height))
+		self.pos_label.text = "Current position: ("+"%.3f"%worldMouse[0]+", "+"%.3f"%worldMouse[1]+")"
 
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		if self.camera.scale < self.level.mapHeight//2 and \
@@ -224,5 +218,5 @@ class FirstWindow(pyglet.window.Window):
 		
 if __name__ == '__main__':
 	#window = FirstWindow(1440,900, fullscreen = True, caption = 'FragileTruck v0.0.1')
-	window = FirstWindow(1280,720, caption = 'FragileTruck v0.0.1')
+	window = FirstWindow(1280, 720, caption = 'FragileTruck v0.0.1')
 	pyglet.app.run()

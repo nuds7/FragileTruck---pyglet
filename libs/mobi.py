@@ -1,15 +1,9 @@
 import pyglet
+from pyglet.gl import *
 import pymunk
 from pymunk import Vec2d
 import math
-
-def imageloader(image_file, placeholder):
-    try:
-        image = pyglet.resource.image(image_file)
-    except:
-        print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
-        image = pyglet.resource.image(placeholder)
-    return image
+import levelassembler
 
 class Elevator:
     def __init__(self, space, position, size, target, padding, speed, image):
@@ -55,26 +49,19 @@ class Elevator:
                                 self.top_body.position[0] + size[0]//2 + padding_right,
                                 self.top_body.position[1] + padding_top)
             self.speed *= -1
-        '''
-        self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
-        self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
-                                            ('v2f', (left[0],left[1],
-                                                     bottom[0],bottom[1],
-                                                     right[0],right[1],
-                                                     top[0],top[1])),
-                                            ('c3B', (0,0,0)*4))
-        '''
+        
         self.color = (200,0,0)
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
 
         #self.sprites = []
-
-        elevatorImage = imageloader(image, 'placeholder.png')
-        elevatorImage.anchor_x = elevatorImage.width/2
-        elevatorImage.anchor_y = elevatorImage.height/2
-        self.sprite = pyglet.sprite.Sprite(elevatorImage)# , batch = level_batch, group = ordered_group)
-        self.sprite.scale = .5
+        image = levelassembler.imageloader(image, 'placeholder.png', size)
+        self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
+        #self.sprite.image.width = size[0]
+        #self.sprite.image.height = size[1]
+        self.sprite.image.anchor_x = self.sprite.image.width//2
+        self.sprite.image.anchor_y = self.sprite.image.height//2
+        #self.sprite.scale = .5
         #self.sprites.append(sprite)
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
@@ -88,11 +75,18 @@ class Elevator:
         self.sprite.batch = level_batch
         self.sprite.group = ordered_group
 
-    def draw(self, player_pos):
+    def update(self, player_pos, keys_held):
+
         if not self.bb.contains_vect(player_pos):
             self.bb_outline.colors = (self.color*4)
         if self.bb.contains_vect(player_pos): 
             self.bb_outline.colors = (self.color2*4)
+        if self.target > 0:
+            if self.top_body.position[1] >= self.position[1] + self.target - 2:
+                self.bb_outline.colors = (self.color3*4)
+        if self.target < 0:
+            if self.top_body.position[1] <= self.position[1] + self.target + 2:
+                self.bb_outline.colors = (self.color3*4)
         #iterNum = 0
         #for bp in self.outlineList:
         self.pPoints = self.shape.get_points()
@@ -106,22 +100,28 @@ class Elevator:
 
         self.sprite.set_position(self.body.position[0], self.body.position[1])
         self.sprite.rotation = math.degrees(-self.body.angle)
-
-    def activate(self, player_pos):
-        if self.bb.contains_vect(player_pos): 
+        if pyglet.window.key.SPACE in keys_held:
+            if self.bb.contains_vect(player_pos): 
+                if self.target > 0:
+                    if self.top_body.position[1] < self.position[1] + self.target:
+                        self.top_body.position[1] += self.speed
+                if self.target < 0:
+                    if self.top_body.position[1] > self.position[1] + self.target:
+                        self.top_body.position[1] += self.speed
+        else:
             if self.target > 0:
-                if self.top_body.position[1] < self.position[1] + self.target:
-                    self.top_body.position[1] += self.speed
+                if self.top_body.position[1] > self.position[1]:
+                    self.top_body.position[1] -= self.speed
             if self.target < 0:
-                if self.top_body.position[1] > self.position[1] + self.target:
-                    self.top_body.position[1] += self.speed
-    def deactivate(self, player_pos):
-        if self.target > 0:
-            if self.top_body.position[1] > self.position[1]:
-                self.top_body.position[1] -= self.speed
-        if self.target < 0:
-            if self.top_body.position[1] < self.position[1]:
-                self.top_body.position[1] -= self.speed
+                if self.top_body.position[1] < self.position[1]:
+                    self.top_body.position[1] -= self.speed
+        if not self.bb.contains_vect(player_pos):
+            if self.target > 0:
+                if self.top_body.position[1] > self.position[1]:
+                    self.top_body.position[1] -= self.speed
+            if self.target < 0:
+                if self.top_body.position[1] < self.position[1]:
+                    self.top_body.position[1] -= self.speed
 
 class ObjectPivot:
     def __init__(self, space, position, size, hinge_pos, 
@@ -136,13 +136,14 @@ class ObjectPivot:
         self.ang_vel = abs(ang_vel) # Refrain from using negative angular velocities, as it may give unexpected results.
         self.start = start + 57
         self.end = end + 57
+        self.size = size
         #self.force = force
         self.space = space
         mass = 3
         self.inertia = pymunk.moment_for_box(mass, size[0], size[1])
         self.body = pymunk.Body(mass, self.inertia)
         self.body.angle = math.radians(start) + math.radians(57)
-        self.body.position = (position[0], position[1])
+        self.body.position = (position[0]-hinge_pos[0], position[1]-hinge_pos[1])
         self.shape = pymunk.Poly.create_box(self.body, size)
         self.shape.friction = 1
         self.shape.group = 2
@@ -158,33 +159,30 @@ class ObjectPivot:
         gear = pymunk.constraint.GearJoint(self.body, self.hinge_body, 1.0, 1.0)
         self.space.add(gear)
 
-        self.left = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1] + padding_top)
-        self.bottom = (self.body.position[0] - size[0]//2 - padding_left, self.body.position[1]- padding_bottom)
-        self.right = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1]- padding_bottom)
-        self.top = (self.body.position[0] + size[0]//2 + padding_right, self.body.position[1] + padding_top)
+        self.left = (position[0] - padding_left, position[1] + padding_top)
+        self.bottom = (position[0] - padding_left, position[1]- padding_bottom)
+        self.right = (position[0] + padding_right, position[1]- padding_bottom)
+        self.top = (position[0] + padding_right, position[1] + padding_top)
 
-        self.bb = pymunk.BB(self.body.position[0] - size[0]//2 - padding_left,
-                            self.body.position[1] - padding_bottom,
-                            self.body.position[0] + size[0]//2 + padding_right,
-                            self.body.position[1] + padding_top)
-        '''
-        self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
-        self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
-                                            ('v2f', (left[0],left[1],
-                                                     bottom[0],bottom[1],
-                                                     right[0],right[1],
-                                                     top[0],top[1])),
-                                            ('c3B', (0,0,0)*4))
-        '''
+        self.bb = pymunk.BB(position[0] - padding_left, #- hinge_pos[0], # left
+                            position[1] - padding_bottom, #  - hinge_pos[1], # bottom
+                            position[0] + padding_right, # - hinge_pos[0], # right
+                            position[1] + padding_top, ) # - hinge_pos[1]) # top
+        
         self.color = (200,0,0)
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
 
-        pivotImage = imageloader(image, 'placeholder.png')
-        pivotImage.anchor_x = pivotImage.width/2
-        pivotImage.anchor_y = pivotImage.height/2
-        self.sprite = pyglet.sprite.Sprite(pivotImage) # batch = level_batch, group = ordered_group)
-        self.sprite.scale = .5
+        image = levelassembler.imageloader(image, 'placeholder.png', size)
+        tex = image.get_texture()
+        glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
+        #self.sprite.image.width = size[0]
+        #self.sprite.image.height = size[1]
+        self.sprite.image.anchor_x = self.sprite.image.width//2
+        self.sprite.image.anchor_y = self.sprite.image.height//2
+        #self.sprite.scale = .5
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
@@ -197,13 +195,13 @@ class ObjectPivot:
         self.sprite.batch = level_batch
         self.sprite.group = ordered_group
 
-    def draw(self, player_pos):
+    def update(self, player_pos, keys_held):
 
         self.bb_outline.colors = (self.color*4)
         if self.bb.contains_vect(player_pos): 
             self.bb_outline.colors = (self.color2*4)
 
-        if self.body.position[1] >= self.hinge_body.position[1]:
+        if self.body.angle >= math.radians(self.end - 57 - 5):
             self.bb_outline.colors = (self.color3*4)
         #iterNum = 0
         #for bp in self.outlineList:
@@ -219,22 +217,28 @@ class ObjectPivot:
         self.sprite.set_position(self.body.position[0], self.body.position[1])
         self.sprite.rotation = math.degrees(-self.body.angle)
 
-    def activate(self, player_pos):
-        if self.bb.contains_vect(player_pos):
-            if self.end - 57 > 0:
-                if self.hinge_body.angle < math.radians(self.end):
-                    self.hinge_body.angle += self.ang_vel
-            if self.end - 57 < 0:
-                if self.hinge_body.angle > math.radians(self.end):
+        if pyglet.window.key.SPACE in keys_held:
+            if self.bb.contains_vect(player_pos):
+                if self.end - 57 >= 0:
+                    if self.hinge_body.angle < math.radians(self.end):
+                        self.hinge_body.angle += self.ang_vel
+                if self.end - 57 < 0:
+                    if self.hinge_body.angle > math.radians(self.end):
+                        self.hinge_body.angle -= self.ang_vel
+        else:
+            if self.end - 57 >= 0:
+                if self.hinge_body.angle > math.radians(self.start):
                     self.hinge_body.angle -= self.ang_vel
-
-    def deactivate(self, player_pos):
-        if self.end - 57 > 0:
-            if self.hinge_body.angle > math.radians(self.start):
-                self.hinge_body.angle -= self.ang_vel
-        if self.end - 57 < 0:
-            if self.hinge_body.angle < math.radians(self.start):
-                self.hinge_body.angle += self.ang_vel
+            if self.end - 57 < 0:
+                if self.hinge_body.angle < math.radians(self.start):
+                    self.hinge_body.angle += self.ang_vel
+        if not self.bb.contains_vect(player_pos):
+            if self.end - 57 >= 0:
+                if self.hinge_body.angle > math.radians(self.start):
+                    self.hinge_body.angle -= self.ang_vel
+            if self.end - 57 < 0:
+                if self.hinge_body.angle < math.radians(self.start):
+                    self.hinge_body.angle += self.ang_vel
 
 
 class Flinger:

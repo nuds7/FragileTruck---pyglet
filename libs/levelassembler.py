@@ -11,13 +11,19 @@ import box
 import time
 import collectable
 
-def imageloader(image_file, placeholder):
+def imageloader(image_file, placeholder, size):
 	try:
-		image = pyglet.resource.image(image_file)
+		i = pyglet.resource.image(image_file)
+		#i = i.get_region(0,0,i.width,i.height)
+		#i.width = size[0]
+		#i.height = size[1]
 	except:
 		print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
-		image = pyglet.resource.image(placeholder)
-	return image
+		i = pyglet.resource.image(placeholder)
+		i = i.get_region(0,0,i.width,i.height)
+		i.width = size[0]
+		i.height = size[1]
+	return i
 
 class Game_Level:
 	def __init__(self, map_zip, space, debug_batch, level_batch, ui_batch, 
@@ -81,7 +87,6 @@ class Game_Level:
 		for line in self.map_file:
 			line = line.strip() # refer to http://programarcadegames.com/index.php?chapter=searching
 			#print(line)
-
 			if line == "": continue # skip blank lines
 			if line.startswith("#"): continue # skip comments
 
@@ -139,31 +144,29 @@ class Game_Level:
 			self.stuff = self.debugBatch.add(2, pyglet.gl.GL_LINES, ordered_group_fg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
-
+		#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 		if self.lowres == 'True':
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			self.parallaxImage = imageloader('parallaxlow.png', 'placeholder.png')
-			self.parallaxImage.width = self.parallaxImage.width//2
-			self.parallaxImage.height = self.parallaxImage.height//2
+			# adding 100px of padding to the parallax image.
+			self.parallaxImage = imageloader('parallaxlow.png', 'placeholder.png', #empty is a 1x1 alpha png special testing case. change to placeholder.png 
+											(self.mapWidth+100,self.mapHeight+100)) #.25
 			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-			#self.parallaxImage_sprite.scale = .5
-			self.levelImage = imageloader('levellow.png', 'placeholder.png')
-			#self.levelImage.width = self.levelImage.width//2
-			#self.levelImage.height = self.levelImage.height//2
+			self.parallaxImage_sprite.image.anchor_x = self.parallaxImage.width//2
+			self.parallaxImage_sprite.image.anchor_y = self.parallaxImage.height//2
+
+			self.levelImage = imageloader('levellow.png', 'placeholder.png', (4,4))
 			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
 			self.levelImage_sprite.x = -25
 			self.levelImage_sprite.y = -25
 			leveltex = self.levelImage.get_texture()
 			glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			#self.levelImage_sprite.scale = .5
 		elif self.lowres == 'False':
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			self.parallaxImage = imageloader('parallax.png', 'placeholder.png')
+			#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			self.parallaxImage = imageloader('parallax.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
 			self.parallaxImage.width = self.parallaxImage.width//2
 			self.parallaxImage.height = self.parallaxImage.height//2
 			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-			#self.parallaxImage_sprite.scale = .5
-			self.levelImage = imageloader('level.png', 'placeholder.png')
+
+			self.levelImage = imageloader('level.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
 			self.levelImage.width = self.levelImage.width//2
 			self.levelImage.height = self.levelImage.height//2
 			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
@@ -187,27 +190,32 @@ class Game_Level:
 
 		#self.levelScore = 0
 
-	def update(self, player_pos, camera_offset):
+	def update(self, player_pos, camera_offset, scale, keys_held):
 		self.camera_offset = camera_offset
-		self.parallaxImage_sprite.x = self.camera_offset[0] * -.2 + 400
-		self.parallaxImage_sprite.y = self.camera_offset[1] * -.2 + 120
+		self.scale = scale
+		# iterating 50% of the camera movement, subtracting the initial 50% of the camera movement,
+		# adding the image's width, and subtracting 1/2 of the padding
+		self.parallaxImage_sprite.x = (self.camera_offset[0]*.5) - self.mapWidth//4 + self.parallaxImage.width//2 - 50
+		self.parallaxImage_sprite.y = (self.camera_offset[1]*.5) - self.mapHeight//4 + self.parallaxImage.height//2 - 50
 		for line in self.bridges:
 			line.draw()
 		for line in self.jellies:
 			line.draw()
 		for line in self.mobis:
-			line.draw(player_pos)
+			line.update(player_pos, keys_held)
 		for line in self.boxes:
 			line.draw()
 		for line in self.collectables:
 			index = self.collectables.index(line)
 			line.update(player_pos, index*(line.image.width*.66))
+	def remove(self):
+		for line in self.boxes:
+			line.remove()
+'''
 	def mobi_activate(self, player_pos):
 		for line in self.mobis:
 			line.activate(player_pos)
 	def mobi_deactivate(self, player_pos):
 		for line in self.mobis:
 			line.deactivate(player_pos)
-	def remove(self):
-		for line in self.boxes:
-			line.remove()
+'''
