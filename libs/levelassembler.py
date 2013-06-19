@@ -155,8 +155,10 @@ class Game_Level:
 
 			self.levelImage = imageloader('levellow.png', 'placeholder.png', (4,4))
 			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
-			self.levelImage_sprite.x = -25
-			self.levelImage_sprite.y = -25
+			self.levelImage_sprite.image.anchor_x = self.levelImage_sprite.image.width//2
+			self.levelImage_sprite.image.anchor_y = self.levelImage_sprite.image.height//2
+			self.levelImage_sprite.x = self.mapWidth//2
+			self.levelImage_sprite.y = self.mapHeight//2
 			leveltex = self.levelImage.get_texture()
 			glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 		elif self.lowres == 'False':
