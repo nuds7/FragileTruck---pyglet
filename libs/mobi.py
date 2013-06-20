@@ -54,15 +54,16 @@ class Elevator:
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
 
-        #self.sprites = []
         image = levelassembler.imageloader(image, 'placeholder.png', size)
+        tex = image.get_texture()
+        glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
         #self.sprite.image.width = size[0]
         #self.sprite.image.height = size[1]
         self.sprite.image.anchor_x = self.sprite.image.width//2
         self.sprite.image.anchor_y = self.sprite.image.height//2
         #self.sprite.scale = .5
-        #self.sprites.append(sprite)
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
@@ -200,9 +201,12 @@ class ObjectPivot:
         self.bb_outline.colors = (self.color*4)
         if self.bb.contains_vect(player_pos): 
             self.bb_outline.colors = (self.color2*4)
-
-        if self.body.angle >= math.radians(self.end - 57 - 5):
-            self.bb_outline.colors = (self.color3*4)
+        if self.end > 0:
+            if self.body.angle >= math.radians(self.end - 57 - 5):
+                self.bb_outline.colors = (self.color3*4)
+        if self.end < 0:
+            if self.body.angle <= math.radians(self.end - 57 + 5):
+                self.bb_outline.colors = (self.color3*4)
         #iterNum = 0
         #for bp in self.outlineList:
         self.pPoints = self.shape.get_points()

@@ -4,17 +4,10 @@ import pymunk
 from pymunk import Vec2d
 import math
 from math import sin,cos
-
-def imageloader(image_file, placeholder):
-    try:
-        image = pyglet.resource.image(image_file)
-    except:
-        print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
-        image = pyglet.resource.image(placeholder)
-    return image
+import levelassembler
 
 class Bridge:
-	def __init__(self, space, starting_position, segment_size, amount, slack, image, debug_batch, level_batch, ordered_group):
+	def __init__(self, space, starting_position, segment_size, amount, slack, image):
 
 		self.starting_position = starting_position
 		self.segment_size = segment_size
@@ -63,7 +56,7 @@ class Bridge:
 															(self.segment_size[0]//2,0), (self.segment_size[0]//-2,0))
 			self.space.add(self.bridgeJoint)
 			self.target_connect += 1
-
+		'''
 		## Primitives
 		self.bridgeOutlineList = []
 		for thing in self.body_list:
@@ -75,21 +68,41 @@ class Bridge:
 			self.bridgeFillDraw = debug_batch.add_indexed(4, pyglet.gl.GL_TRIANGLES, ordered_group, [0,1,2,2,3,0], ('v2f'), ('c4B', (0,0,0,50)*4))
 			self.bridgeFillList.append(self.bridgeFillDraw)
 		
+		
 		self.bridgeAnchors = debug_batch.add(2, pyglet.gl.GL_POINTS, ordered_group, ('v2f', (self.start_constraint.position[0],self.start_constraint.position[1],
 																	self.end_constraint.position[0],self.end_constraint.position[1])),
 																	('c3B', (0,255,0)*2))
+		'''
 		
 		glPointSize(4)
 
 		self.sprites = []
 		
-		bridgeImage = imageloader(image, 'placeholder.png')
-		bridgeImage.anchor_x = bridgeImage.width/2
-		bridgeImage.anchor_y = bridgeImage.height/2
+		image = levelassembler.imageloader(image, 'placeholder.png', (self.segment_size))
+		image.anchor_x = image.width/2
+		image.anchor_y = image.height/2
 		for i in range(amount):
-			sprite = pyglet.sprite.Sprite(bridgeImage, batch = level_batch, group = ordered_group)
-			sprite.scale = .5
+			sprite = pyglet.sprite.Sprite(image)
+			#sprite.scale = .5
 			self.sprites.append(sprite)
+	def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
+		## Primitives
+		self.bridgeOutlineList = []
+		for thing in self.body_list:
+			self.bridgeOutlineDraw = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+			self.bridgeOutlineList.append(self.bridgeOutlineDraw)
+
+		self.bridgeFillList = []
+		for thing in self.body_list:
+			self.bridgeFillDraw = debug_batch.add_indexed(4, pyglet.gl.GL_TRIANGLES, ordered_group, [0,1,2,2,3,0], ('v2f'), ('c4B', (0,0,0,50)*4))
+			self.bridgeFillList.append(self.bridgeFillDraw)
+
+		self.bridgeAnchors = debug_batch.add(2, pyglet.gl.GL_POINTS, ordered_group, ('v2f', (self.start_constraint.position[0],self.start_constraint.position[1],
+																	self.end_constraint.position[0],self.end_constraint.position[1])),
+																	('c3B', (0,255,0)*2))
+		for sprite in self.sprites:
+			sprite.batch = level_batch
+			sprite.group = ordered_group
 
 	def draw(self):
 		# Change the outline color if the body is sleeping

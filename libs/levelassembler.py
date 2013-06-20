@@ -164,12 +164,14 @@ class Game_Level:
 			leveltex = self.levelImage.get_texture()
 			glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 		elif self.lowres == 'False':
-			#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			self.parallaxImage = imageloader('parallax.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
-			#self.parallaxImage.width = self.parallaxImage.width//2
-			#self.parallaxImage.height = self.parallaxImage.height//2
+			self.parallaxImage = imageloader('blank.png', 'placeholder.png', #empty is a 1x1 alpha png special testing case. change to placeholder.png 
+											(self.mapWidth+100,self.mapHeight+100)) #.25
 			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-			self.parallaxImage_sprite.scale = .5
+			self.parallaxImage_sprite.image.anchor_x = self.parallaxImage.width//2
+			self.parallaxImage_sprite.image.anchor_y = self.parallaxImage.height//2
+			#parallaxtex = self.parallaxImage.get_texture()
+			#glTexParameteri(parallaxtex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			#self.parallaxImage_sprite.scale = .5
 
 			self.levelImage = imageloader('level.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
 			#self.levelImage.width = self.levelImage.width//2
@@ -190,6 +192,8 @@ class Game_Level:
 		for line in self.collectables:
 			line.setup_pyglet_batch(level_batch, ui_batch, ordered_group_fg3)
 		for line in self.boxes:
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+		for line in self.bridges:
 			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
 		for line in self.mobis:
 			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
