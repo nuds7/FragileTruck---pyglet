@@ -182,12 +182,14 @@ class Player:
         self.wheel_image.anchor_y = self.wheel_image.height/2
         self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
         self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
+        wheeltex = self.wheel_image.get_texture()
+        glTexParameteri(wheeltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         self.lwheel_sprite.scale = .5
         self.rwheel_sprite.scale = .5
 
         self.suspension_img = pyglet.resource.image("suspension.png")
         self.suspension_img.anchor_x = self.suspension_img.width/2
-        self.suspension_img.anchor_y = 6
+        self.suspension_img.anchor_y = 9
         self.l_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
         self.r_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
         self.l_suspension_sprite.scale = .5

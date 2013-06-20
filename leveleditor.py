@@ -51,7 +51,13 @@ class FirstWindow(pyglet.window.Window):
 		self.space.gravity = (0,-800)
 		#self.space.sleep_time_threshold = .05
 
-		selected_map = 'dkcopy' # input("Map file to edit: ")
+		self.lvllist = [] # list of levels
+		for lvl in os.listdir("levels"):
+			self.lvllist.append(lvl)
+		self.lvl_iter_num = 0
+		print('Levels: '+str(self.lvllist))
+
+		selected_map = 'dkcopy'
 		self.map_zip = "levels/"+str(selected_map)+".zip"
 
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch, self.ui_batch,
@@ -102,14 +108,12 @@ class FirstWindow(pyglet.window.Window):
 											color = (0,0,0,200),
 											batch = self.ui_batch)
 
-		#self.elevatorBuilder
-
 	def on_draw(self):
 		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 
 						  (self.camera.newPositionX,self.camera.newPositionY),
 						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale), 
 						  self.keys_held)
-		self.space.step(0.015)
+		self.space.step(0.005)
 
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 							(self.scroll_zoom + self.height//4), 
@@ -147,6 +151,7 @@ class FirstWindow(pyglet.window.Window):
 		if symbol == pyglet.window.key.T:
 			self.scroll_zoom = self.height//4
 
+
 		if symbol == pyglet.window.key._1:
 			self.mode = 'Segment'
 		if symbol == pyglet.window.key._2:
@@ -156,6 +161,43 @@ class FirstWindow(pyglet.window.Window):
 
 		self.builder.write_to_file(symbol, modifiers)
 		self.builder.undo(symbol, modifiers, self.mode)
+		# Changing maps.
+		# Can be adapted for the regular game, I just need to take in account
+		# the player and its starting position.
+		if symbol == pyglet.window.key.UP: 
+			# clean out batches
+			self.debug_batch = pyglet.graphics.Batch()
+			self.level_batch = pyglet.graphics.Batch()
+			self.ui_batch = pyglet.graphics.Batch()
+	
+			self.levelForeground3 	= pyglet.graphics.OrderedGroup(4)
+			self.levelForeground2 	= pyglet.graphics.OrderedGroup(3)
+			self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
+			self.levelBackground 	= pyglet.graphics.OrderedGroup(1)
+			self.parallaxBackground = pyglet.graphics.OrderedGroup(0)
+			# remove all bodies, shapes, and constraints
+			for c in self.space.constraints:
+				self.space.remove(c)
+			for s in self.space.shapes:
+				self.space.remove(s)
+			for b in self.space.bodies:
+				self.space.remove(b)
+
+			# set new level
+			print(self.lvl_iter_num)
+			print(len(self.lvllist))
+			if self.lvl_iter_num < len(self.lvllist)+1:
+				self.lvl_iter_num += 1
+			if self.lvl_iter_num > len(self.lvllist)-1:
+				self.lvl_iter_num = 0
+			print('Loading level... '+str(self.lvllist[self.lvl_iter_num]))
+			self.level = levelassembler.Game_Level('levels/'+self.lvllist[self.lvl_iter_num], self.space, self.debug_batch, self.level_batch, self.ui_batch,
+											      self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
+			# reset camera
+			self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
+			self.cameraPosX = self.level.mapWidth//2
+			self.cameraPosY = self.level.mapHeight//2
+			self.scroll_zoom = self.level.mapHeight//2 - self.height//4
 
 	def on_key_release(self, symbol, modifiers):
 		self.keys_held.pop(self.keys_held.index(symbol))
@@ -184,14 +226,14 @@ class FirstWindow(pyglet.window.Window):
 		self.cameraPos = self.camera.edge_bounce(dx,dy,[self.cameraPosX,self.cameraPosY])
 		self.cameraPosX = self.cameraPos[0]
 		self.cameraPosY = self.cameraPos[1]
-		if buttons == 4:
+		if buttons == 4 or buttons == 5:
 			self.cameraPosX -= dx*((self.camera.newWeightedScale*aspect)/(self.width/2))
 			self.cameraPosY -= dy*((self.camera.newWeightedScale)/(self.height/2))
 		#
 		worldMouse = camera.worldMouse(x, y, self.camera.newPositionX, self.camera.newPositionY, 
 										   self.camera.newWeightedScale, (self.width,self.height))
 		if self.mode == 'Segment':
-			if buttons == 1:
+			if buttons == 1 or buttons == 5:
 				self.builder.guide(buttons, worldMouse)
 				self.drag_info = (int(worldMouse[0]),int(worldMouse[1]))
 
@@ -208,13 +250,13 @@ class FirstWindow(pyglet.window.Window):
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		if self.camera.scale < self.level.mapHeight//2 and \
 					self.camera.scale < (self.level.mapWidth//2) / self.aspect:
-			if scroll_y <= -1.0:
+			if scroll_y < 0:
 				self.scroll_zoom += 20*abs(scroll_y)
-				print("Zooming out by:", 20*abs(scroll_y))
+				#print("Zooming out by:", 20*abs(scroll_y))
 		if self.camera.scale > 50:
-			if scroll_y >= 1.0:
+			if scroll_y > 0:
 				self.scroll_zoom -= 20*abs(scroll_y)
-				print("Zooming in by:", 20*abs(scroll_y))
+				#print("Zooming in by:", 20*abs(scroll_y))
 		
 if __name__ == '__main__':
 	#window = FirstWindow(1440,900, fullscreen = True, caption = 'FragileTruck v0.0.1')

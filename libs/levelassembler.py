@@ -146,12 +146,14 @@ class Game_Level:
 										('c3B/static', (125,10,160,200,20,60)))
 		#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 		if self.lowres == 'True':
-			# adding 100px of padding to the parallax image.
+			# make the parallax image 100px bigger than the map image.
 			self.parallaxImage = imageloader('parallaxlow.png', 'placeholder.png', #empty is a 1x1 alpha png special testing case. change to placeholder.png 
 											(self.mapWidth+100,self.mapHeight+100)) #.25
 			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
 			self.parallaxImage_sprite.image.anchor_x = self.parallaxImage.width//2
 			self.parallaxImage_sprite.image.anchor_y = self.parallaxImage.height//2
+			parallaxtex = self.parallaxImage.get_texture()
+			glTexParameteri(parallaxtex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
 			self.levelImage = imageloader('levellow.png', 'placeholder.png', (4,4))
 			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
@@ -164,16 +166,18 @@ class Game_Level:
 		elif self.lowres == 'False':
 			#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 			self.parallaxImage = imageloader('parallax.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
-			self.parallaxImage.width = self.parallaxImage.width//2
-			self.parallaxImage.height = self.parallaxImage.height//2
+			#self.parallaxImage.width = self.parallaxImage.width//2
+			#self.parallaxImage.height = self.parallaxImage.height//2
 			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
+			self.parallaxImage_sprite.scale = .5
 
 			self.levelImage = imageloader('level.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
-			self.levelImage.width = self.levelImage.width//2
-			self.levelImage.height = self.levelImage.height//2
+			#self.levelImage.width = self.levelImage.width//2
+			#self.levelImage.height = self.levelImage.height//2
 			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
 			self.levelImage_sprite.x = -25
 			self.levelImage_sprite.y = -25
+			self.levelImage_sprite.scale = .5
 		else:
 			print("Error with boolean 'LowRes.' '"+str(self.lowres)+"' is not a correct value. LowRes must equal either 'True' or 'False.'")
 	
@@ -195,10 +199,8 @@ class Game_Level:
 	def update(self, player_pos, camera_offset, scale, keys_held):
 		self.camera_offset = camera_offset
 		self.scale = scale
-		# iterating 50% of the camera movement, subtracting the initial 50% of the camera movement,
-		# adding the image's width, and subtracting 1/2 of the padding
-		self.parallaxImage_sprite.x = (self.camera_offset[0]*.5) - self.mapWidth//4 + self.parallaxImage.width//2 - 50
-		self.parallaxImage_sprite.y = (self.camera_offset[1]*.5) - self.mapHeight//4 + self.parallaxImage.height//2 - 50
+		self.parallaxImage_sprite.x = self.mapWidth/2 + (self.camera_offset[0]*.5) - self.mapWidth/4 
+		self.parallaxImage_sprite.y = self.mapHeight/2 +(self.camera_offset[1]*.5) - self.mapHeight/4
 		for line in self.bridges:
 			line.draw()
 		for line in self.jellies:

@@ -125,9 +125,6 @@ class FirstWindow(pyglet.window.Window):
 			self.scroll_zoom = 0
 		if symbol == pyglet.window.key.T:
 			self.scroll_zoom = self.height//4
-		if symbol == pyglet.window.key.C:
-			self.level.remove()
-		
 		
 	def on_key_release(self, symbol, modifiers):
 		self.keys_held.pop(self.keys_held.index(symbol))
@@ -155,11 +152,11 @@ class FirstWindow(pyglet.window.Window):
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		if self.camera.scale < self.level.mapHeight//2 and \
 					self.camera.scale < (self.level.mapWidth//2) / self.aspect:
-			if scroll_y <= -1.0:
+			if scroll_y < 0:
 				self.scroll_zoom += 30*abs(scroll_y)
 				#print("Zooming out by:", 30*abs(scroll_y))
 		if self.camera.scale > 100:
-			if scroll_y >= 1.0:
+			if scroll_y > 0:
 				self.scroll_zoom -= 30*abs(scroll_y)
 				#print("Zooming in by:", 30*abs(scroll_y))
 		

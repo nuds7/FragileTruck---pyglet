@@ -142,7 +142,7 @@ class ObjectPivot:
         mass = 3
         self.inertia = pymunk.moment_for_box(mass, size[0], size[1])
         self.body = pymunk.Body(mass, self.inertia)
-        self.body.angle = math.radians(start) + math.radians(57)
+        self.body.angle = math.radians(start)
         self.body.position = (position[0]-hinge_pos[0], position[1]-hinge_pos[1])
         self.shape = pymunk.Poly.create_box(self.body, size)
         self.shape.friction = 1
