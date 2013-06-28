@@ -145,8 +145,11 @@ class Collectable(object):
 				self.ui_batch_set = True
 			if self.opacity < 255:
 				self.opacity += 5
-			if self.sprite.scale > 1:
-				self.sprite.scale -= 0.1
+			if self.sprite.scale != 1:
+				if self.sprite.scale > 1:
+					self.sprite.scale -= 0.1
+				if self.sprite.scale < 1:
+					self.sprite.scale += 0.1
 
 			self.sprite.opacity = self.opacity
 			self.sprite.color = sprite_overlay(self.sprite, [4,4,4], self.overlay_color)

@@ -10,10 +10,12 @@ import mobi
 import box
 import time
 import collectable
+import trigger
 
 def imageloader(image_file, placeholder, size):
 	try:
 		i = pyglet.resource.image(image_file)
+		#print(i)
 		#i = i.get_region(0,0,i.width,i.height)
 		#i.width = size[0]
 		#i.height = size[1]
@@ -83,6 +85,7 @@ class Game_Level:
 		self.boxes = []
 		self.collectables = []
 		self.detectors = []
+		self.triggers = []
 
 		for line in self.map_file:
 			line = line.strip() # refer to http://programarcadegames.com/index.php?chapter=searching
@@ -130,6 +133,10 @@ class Game_Level:
 			if line.startswith("collectable.Collectable"):
 				line = eval(line)
 				self.collectables.append(line)
+				continue
+			if line.startswith("trigger"):
+				line = eval(line)
+				self.triggers.append(line)
 				continue
 			if line.startswith("playerdetector"):
 				#print(line)
@@ -197,10 +204,12 @@ class Game_Level:
 			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
 		for line in self.mobis:
 			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+		for line in self.triggers:
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg3)
 
 		#self.levelScore = 0
 
-	def update(self, player_pos, camera_offset, scale, keys_held):
+	def update(self, player_pos, angle, camera_offset, scale, keys_held):
 		self.camera_offset = camera_offset
 		self.scale = scale
 		self.parallaxImage_sprite.x = self.mapWidth/2 + (self.camera_offset[0]*.5) - self.mapWidth/4 
@@ -216,6 +225,8 @@ class Game_Level:
 		for line in self.collectables:
 			index = self.collectables.index(line)
 			line.update(player_pos, index*(line.image.width*.66))
+		for line in self.triggers:
+			line.update(player_pos, angle)
 	def remove(self):
 		for line in self.boxes:
 			line.remove()

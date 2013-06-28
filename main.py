@@ -31,7 +31,8 @@ class FirstWindow(pyglet.window.Window):
 		glEnable(GL_BLEND)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_LINE_SMOOTH)
-		#self.set_vsync(False)
+		#self.set_vsync(True)
+		pyglet.clock.set_fps_limit(1/60.0)
 
 		self.debug_batch = pyglet.graphics.Batch()
 		self.level_batch = pyglet.graphics.Batch()
@@ -58,12 +59,14 @@ class FirstWindow(pyglet.window.Window):
 											anchor_x = 'right', anchor_y = 'bottom',
 											color = (0,0,0,120),
 											batch = self.ui_batch)
+		'''
 		self.fps_label = pyglet.text.Label(text = '',
 											font_name = 'Calibri', font_size = 8, bold = True,
 											x = self.width, y = 8, 
 											anchor_x = 'right', anchor_y = 'bottom',
 											color = (0,0,0,200),
 											batch = self.ui_batch)
+		'''
 		self.player = player.Player(self.space, (self.level.start_Position_X,self.level.start_Position_Y), 
 									self.level_batch, self.levelForeground, self.levelForeground2, self.levelForeground3)
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
@@ -81,7 +84,7 @@ class FirstWindow(pyglet.window.Window):
 
 	def on_draw(self):
 		self.space.step(0.015)
-		self.level.update(self.player.car_body.position, 
+		self.level.update(self.player.car_body.position, self.player.car_body.angle,
 						  (self.camera.newPositionX,self.camera.newPositionY),
 						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale),
 						  self.keys_held)
@@ -95,16 +98,11 @@ class FirstWindow(pyglet.window.Window):
 		glClearColor(20,50,20,0)
 		self.player.draw()
 		self.level_batch.draw()
-		self.debug_batch.draw()
+		#self.deb/ug_batch.draw()
 		#self.player.debug_draw() # LAGGY
 		self.vehicle_particles.draw()
-
-		worldPos = camera.worldMouse(self.player.car_body.position[0], self.player.car_body.position[1], 
-									self.camera.newPositionX, self.camera.newPositionY, 
-									self.camera.newWeightedScale, (self.width,self.height))
-
 		self.camera.hud_mode() # draw hud after this
-		self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
+		#self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
 		self.ui_batch.draw()
 
 	def update(self, dt):

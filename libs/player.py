@@ -5,6 +5,7 @@ import pymunk
 from pymunk import Vec2d
 import math
 from math import sin,cos,atan2,pi    
+import levelassembler
 
 class Circle:
     def __init__ (self, radius=0, angle=0, position=(0,0), add=0):
@@ -42,8 +43,6 @@ class Circle:
                             ('v2f', (self.clist)),
                             ('c3B', (0,0,0)*self.list_length)
                             )
-
-        
 
 class Player:
     def __init__(self, space, body_position, level_batch, level_foreground, level_foreground2, level_foreground3):
@@ -351,15 +350,15 @@ class Player:
         if (pyglet.window.key.DOWN in self.keys_held and \
                     abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
             if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-                self.left_wheel_b.angular_velocity += 8
+                self.left_wheel_b.angular_velocity += 6
             else: # Regular
-                self.left_wheel_b.angular_velocity += 5
+                self.left_wheel_b.angular_velocity += 3
         if (pyglet.window.key.UP in self.keys_held and \
                     abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
             if pyglet.window.key.LSHIFT in self.keys_held: # Boost
-                self.left_wheel_b.angular_velocity -= 8
+                self.left_wheel_b.angular_velocity -= 6
             else: # Regular
-                self.left_wheel_b.angular_velocity -= 5
+                self.left_wheel_b.angular_velocity -= 3
 
         if not pyglet.window.key.UP in self.keys_held and \
                     not pyglet.window.key.DOWN in self.keys_held:
@@ -367,4 +366,4 @@ class Player:
             self.right_wheel_b.angular_velocity      *= .95
 
         if pyglet.window.key.LCTRL in self.keys_held:
-            self.car_body.angular_velocity           *= 0.49
+            self.car_body.angular_velocity           *= 0.49      

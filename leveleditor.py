@@ -32,13 +32,14 @@ class FirstWindow(pyglet.window.Window):
 		glEnable(GL_BLEND)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		glEnable(GL_LINE_SMOOTH)
-		#self.set_vsync(False)
+		#self.set_vsync(True)
+		pyglet.clock.set_fps_limit(1/60.0)
 		glPointSize(4)
 		glLineWidth(2)
 
-		self.debug_batch = pyglet.graphics.Batch()
-		self.level_batch = pyglet.graphics.Batch()
-		self.ui_batch 	 = pyglet.graphics.Batch()
+		self.debug_batch  		= pyglet.graphics.Batch()
+		self.level_batch  		= pyglet.graphics.Batch()
+		self.ui_batch 	  		= pyglet.graphics.Batch()
 		self.levelForeground3 	= pyglet.graphics.OrderedGroup(4)
 		self.levelForeground2 	= pyglet.graphics.OrderedGroup(3)
 		self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
@@ -81,12 +82,14 @@ class FirstWindow(pyglet.window.Window):
 											anchor_x = 'right', anchor_y = 'bottom',
 											color = (0,0,0,120),
 											batch = self.ui_batch)
+		'''
 		self.fps_label = pyglet.text.Label(text = '',
 											font_name = 'Calibri', font_size = 8, bold = True,
 											x = self.width, y = 8, 
 											anchor_x = 'right', anchor_y = 'bottom',
 											color = (0,0,0,200),
 											batch = self.ui_batch)
+		'''
 		self.mode_label = pyglet.text.Label(text = self.mode,
 											font_name = 'Calibri', font_size = 8, bold = True,
 											x = 1, y = 0, 
@@ -107,12 +110,11 @@ class FirstWindow(pyglet.window.Window):
 											batch = self.ui_batch)
 		self.level_label.text = self.level.mapName
 	def on_draw(self):
-		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 
+		self.space.step(0.015)
+		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 0,
 						  (self.camera.newPositionX,self.camera.newPositionY),
 						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale), 
 						  self.keys_held)
-		self.space.step(0.015)
-
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 							(self.scroll_zoom + self.height//4), 
 							0, [5,5], 10)
@@ -122,7 +124,7 @@ class FirstWindow(pyglet.window.Window):
 		self.level_batch.draw()
 		self.debug_batch.draw()
 		self.camera.hud_mode() # draw hud after this
-		self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
+		#self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
 		self.ui_batch.draw()
 		self.builder.update()
 		
@@ -166,13 +168,13 @@ class FirstWindow(pyglet.window.Window):
 			# clean out batches
 			self.debug_batch = pyglet.graphics.Batch()
 			self.level_batch = pyglet.graphics.Batch()
-			#self.ui_batch = pyglet.graphics.Batch()
-	
-			self.levelForeground3 	= pyglet.graphics.OrderedGroup(4)
-			self.levelForeground2 	= pyglet.graphics.OrderedGroup(3)
-			self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
-			self.levelBackground 	= pyglet.graphics.OrderedGroup(1)
-			self.parallaxBackground = pyglet.graphics.OrderedGroup(0)
+
+			#self.levelForeground3 	 = pyglet.graphics.OrderedGroup(4)
+			#self.levelForeground2 	 = pyglet.graphics.OrderedGroup(3)
+			#self.levelForeground 	 = pyglet.graphics.OrderedGroup(2)
+			#self.levelBackground 	 = pyglet.graphics.OrderedGroup(1)
+			#self.parallaxBackground = pyglet.graphics.OrderedGroup(0)
+			
 			# remove all bodies, shapes, and constraints
 			for c in self.space.constraints:
 				self.space.remove(c)
@@ -189,6 +191,7 @@ class FirstWindow(pyglet.window.Window):
 			if self.lvl_iter_num > len(self.lvllist)-1:
 				self.lvl_iter_num = 0
 			print('Loading level... '+str(self.lvllist[self.lvl_iter_num]))
+			self.builder = levelbuilder.LevelBuilder(self.debug_batch, self.levelForeground3, self.levelForeground2, self.levelForeground)
 			self.level = levelassembler.Game_Level('levels/'+self.lvllist[self.lvl_iter_num], self.space, self.debug_batch, self.level_batch, self.ui_batch,
 											      self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
 			self.level_label.text = self.level.mapName
