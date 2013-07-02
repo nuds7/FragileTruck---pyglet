@@ -6,6 +6,7 @@ from pymunk import Vec2d
 import math
 from math import sin,cos,atan2,pi    
 import levelassembler
+import loaders
 
 class Circle:
     def __init__ (self, radius=0, angle=0, position=(0,0), add=0):
@@ -45,12 +46,10 @@ class Circle:
                             )
 
 class Player:
-    def __init__(self, space, body_position, level_batch, level_foreground, level_foreground2, level_foreground3):
+    def __init__(self, space, body_position, level_batch, ordered_group_lfg, ordered_group_lfg2, ordered_group_lfg3):
         self.space = space
         #self.map_size = map_size
 
-        self.enable_antenna = False
-        
         self.lcircle = Circle()
         self.rcircle = Circle()
 
@@ -125,88 +124,48 @@ class Player:
 
         self.space.add(self.left_spring, self.right_spring, self.left_groove, self.right_groove)
 
-        if self.enable_antenna:
-            self.ant_segment_size = .2,7
-            self.ant_segment_mass = .000005
-            self.ant_segment_list = []
-            self.ant_body_list = []
-            self.ant_add = 0
-    
-            for i in range(3):
-                self.ant_segment_inertia           = pymunk.moment_for_box(self.ant_segment_mass, self.ant_segment_size[0], self.ant_segment_size[1])
-                self.ant_segment_body              = pymunk.Body(self.ant_segment_mass, self.ant_segment_inertia)
-                self.ant_segment_body.position     = self.body_position[0] + 26, self.body_position[1] + 5 + self.ant_add
-                self.ant_segment_shape             = pymunk.Poly.create_box(self.ant_segment_body, self.ant_segment_size)
-                self.ant_segment_shape.friction    = 0
-                self.ant_segment_shape.group       = 1
-    
-                self.space.add(self.ant_segment_body, self.ant_segment_shape)
-                self.ant_body_list.append(self.ant_segment_body)
-                self.ant_segment_list.append(self.ant_segment_shape)
-    
-                self.ant_add += self.ant_segment_size[1]
-    
-            self.target_connect = 0
-            
-            self.ant_car_RSpring = pymunk.constraint.DampedRotarySpring(self.car_body, self.ant_body_list[0], 
-                                                                    0,1,.003)
-            self.ant_car_Joint = pymunk.constraint.PivotJoint(self.car_body, self.ant_body_list[0], 
-                                                                (26,5), (0,self.ant_segment_size[1]//-2))
-            self.space.add(self.ant_car_RSpring, self.ant_car_Joint)
-    
-            for seg in self.ant_body_list[1:]:
-                self.antRSpring = pymunk.constraint.DampedRotarySpring(self.ant_body_list[self.target_connect], seg, 
-                                                                0,.5,.005)
-                self.antJoint = pymunk.constraint.PivotJoint(self.ant_body_list[self.target_connect], seg, 
-                                                                (0,self.ant_segment_size[1]//2), (0,self.ant_segment_size[1]//-2))
-                self.space.add(self.antJoint)
-                self.space.add(self.antRSpring)
-                self.target_connect += 1
-    
-            self.antOutlineList = []
-            for thing in self.ant_body_list:
-                self.antOutlineDraw = level_batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
-                self.antOutlineList.append(self.antOutlineDraw)
-    
-        self.player_image = pyglet.resource.image("truck.png")
-        self.player_image.anchor_x = self.player_image.width/2 + 7
-        self.player_image.anchor_y = self.player_image.height/2 - 1
-        self.player_sprite = pyglet.sprite.Sprite(self.player_image, batch = level_batch, group = level_foreground2)
-        self.player_sprite.scale = .5
-        playertex = self.player_image.get_texture()
-        glTexParameteri(playertex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
-        self.wheel_image = pyglet.resource.image("wheel.png")
-        self.wheel_image.anchor_x = self.wheel_image.width/2
-        self.wheel_image.anchor_y = self.wheel_image.height/2
-        self.lwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
-        self.rwheel_sprite = pyglet.sprite.Sprite(self.wheel_image, batch = level_batch, group = level_foreground3)
-        wheeltex = self.wheel_image.get_texture()
-        glTexParameteri(wheeltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        self.lwheel_sprite.scale = .5
-        self.rwheel_sprite.scale = .5
+        self.player_sprite = loaders.spriteloader('truck.png', 
+                                                  anchor=('center','center'),
+                                                  anchor_offset=(7,-1),
+                                                  scale = .5,
+                                                  batch=level_batch,
+                                                  group=ordered_group_lfg2,
+                                                  linear_intrpolation=True)
 
-        self.suspension_img = pyglet.resource.image("suspension.png")
-        self.suspension_img.anchor_x = self.suspension_img.width/2
-        self.suspension_img.anchor_y = 9
-        self.l_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
-        self.r_suspension_sprite = pyglet.sprite.Sprite(self.suspension_img, batch = level_batch, group = level_foreground)
-        self.l_suspension_sprite.scale = .5
-        self.r_suspension_sprite.scale = .5
-        '''
-        self.lsusbot_image = pyglet.resource.image("lsusbot.png")
-        self.lsusbot_image.anchor_x = self.lsusbot_image.width/2 
-        self.lsusbot_image.anchor_y = self.lsusbot_image.height/2 - 18
-        self.lsusbot_sprite = pyglet.sprite.Sprite(self.lsusbot_image, batch = level_batch, group = level_foreground)
+        self.wheel_sprite_l = loaders.spriteloader('wheel.png', 
+                                                  anchor=('center','center'),
+                                                  #anchor_offset=(7,-1),
+                                                  scale = .5,
+                                                  batch=level_batch,
+                                                  group=ordered_group_lfg3,
+                                                  linear_intrpolation=True)
 
-        self.rsusbot_image = pyglet.resource.image("rsusbot.png")
-        self.rsusbot_image.anchor_x = self.rsusbot_image.width/2
-        self.rsusbot_image.anchor_y = self.rsusbot_image.height/2 - 18
-        self.rsusbot_sprite = pyglet.sprite.Sprite(self.rsusbot_image, batch = level_batch, group = level_foreground)
+        self.wheel_sprite_r = loaders.spriteloader('wheel.png', 
+                                                  anchor=('center','center'),
+                                                  #anchor_offset=(7,-1),
+                                                  scale = .5,
+                                                  batch=level_batch,
+                                                  group=ordered_group_lfg3,
+                                                  linear_intrpolation=True)
 
-        self.lsusbot_sprite.scale = .5
-        self.rsusbot_sprite.scale = .5
-        '''
+
+        self.suspension_sprite_l = loaders.spriteloader('suspension.png', 
+                                                  anchor=('center',9),
+                                                  #anchor_offset=(7,-1),
+                                                  scale = .5,
+                                                  batch=level_batch,
+                                                  group=ordered_group_lfg,
+                                                  linear_intrpolation=True)
+
+        self.suspension_sprite_r = loaders.spriteloader('suspension.png', 
+                                                  anchor=('center',9),
+                                                  #anchor_offset=(7,-1),
+                                                  scale = .5,
+                                                  batch=level_batch,
+                                                  group=ordered_group_lfg,
+                                                  linear_intrpolation=True)
+
 
         self.mouseGrabbed = False
         self.grabFirstClick = True
@@ -259,46 +218,23 @@ class Player:
         self.player_sprite.set_position(self.sprite_x, self.sprite_y)
 
         self.player_sprite.rotation =  math.degrees(-self.car_body.angle)
-        '''
-        self.lsusbot_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
-        self.lsusbot_sprite.rotation = math.degrees(-self.car_body.angle)
-        self.rsusbot_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
-        self.rsusbot_sprite.rotation = math.degrees(-self.car_body.angle)
-        '''
-        self.lwheel_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
-        self.lwheel_sprite.rotation = math.degrees(-self.left_wheel_b.angle)
-        self.rwheel_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
-        self.rwheel_sprite.rotation = math.degrees(-self.right_wheel_b.angle)
-        
-        #self.lwheel_sprite.draw()
-        #self.rwheel_sprite.draw()
 
-        #self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
-        #self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
-        #if self.car_body.is_sleeping: self.car_body.activate()
+        self.wheel_sprite_l.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
+        self.wheel_sprite_l.rotation = math.degrees(-self.left_wheel_b.angle)
+        self.wheel_sprite_r.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
+        self.wheel_sprite_r.rotation = math.degrees(-self.right_wheel_b.angle)
 
         deltaYL = self.left_wheel_b.position[1] - self.car_body.position[1]
         deltaXL = self.left_wheel_b.position[0] - self.car_body.position[0]
         deltaYR = self.right_wheel_b.position[1] - self.car_body.position[1]
         deltaXR = self.right_wheel_b.position[0] - self.car_body.position[0]
 
-        self.l_suspension_sprite.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
-        self.l_suspension_sprite.rotation = math.degrees(atan2(deltaYL,deltaXL)) *-1 - 90 #100 
+        self.suspension_sprite_l.set_position(self.left_wheel_b.position[0], self.left_wheel_b.position[1])
+        self.suspension_sprite_l.rotation = math.degrees(atan2(deltaYL,deltaXL)) *-1 - 90 #100 
 
-        self.r_suspension_sprite.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
-        self.r_suspension_sprite.rotation = math.degrees(atan2(deltaYR,deltaXR)) *-1 - 90 #80
+        self.suspension_sprite_r.set_position(self.right_wheel_b.position[0], self.right_wheel_b.position[1])
+        self.suspension_sprite_r.rotation = math.degrees(atan2(deltaYR,deltaXR)) *-1 - 90 #80
 
-        if self.enable_antenna:
-            iterNum = 0
-            for bp in self.antOutlineList:
-                self.pPoints = self.ant_segment_list[iterNum].get_points()
-                self.p_list = []
-                for point in self.pPoints:
-                    self.p_list.append(point.x)
-                    self.p_list.append(point.y)
-                bp.vertices = self.p_list
-                self.antOutlineList[iterNum].vertices = self.p_list
-                iterNum += 1
 
     def debug_draw(self):
         if self.mouseGrabbed == True:
@@ -324,19 +260,6 @@ class Player:
 
         self.lcircle.update(self.left_wheel_radius, self.left_wheel_b.angle, self.left_wheel_b.position)
         self.rcircle.update(self.right_wheel_radius, self.right_wheel_b.angle, self.right_wheel_b.position)
-
-
-        if self.enable_antenna:
-            iterNum = 0
-            for bp in self.antOutlineList:
-                self.pPoints = self.ant_segment_list[iterNum].get_points()
-                self.p_list = []
-                for point in self.pPoints:
-                    self.p_list.append(point.x)
-                    self.p_list.append(point.y)
-                bp.vertices = self.p_list
-                self.antOutlineList[iterNum].vertices = self.p_list
-                iterNum += 1
     
         #if self.car_body.is_sleeping: self.car_body.activate()
 
@@ -352,13 +275,13 @@ class Player:
             if pyglet.window.key.LSHIFT in self.keys_held: # Boost
                 self.left_wheel_b.angular_velocity += 6
             else: # Regular
-                self.left_wheel_b.angular_velocity += 3
+                self.left_wheel_b.angular_velocity += 4
         if (pyglet.window.key.UP in self.keys_held and \
                     abs(self.left_wheel_b.angular_velocity) < self.player_max_ang_vel):
             if pyglet.window.key.LSHIFT in self.keys_held: # Boost
                 self.left_wheel_b.angular_velocity -= 6
             else: # Regular
-                self.left_wheel_b.angular_velocity -= 3
+                self.left_wheel_b.angular_velocity -= 4
 
         if not pyglet.window.key.UP in self.keys_held and \
                     not pyglet.window.key.DOWN in self.keys_held:

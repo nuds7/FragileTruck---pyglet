@@ -67,15 +67,16 @@ class Camera(object):
 			-self.newWeightedScale,
 			+self.newWeightedScale)
 
-		self.newAngle = ((self.newAngle*(50-1))+angle) / 50
+		self.newAngle = ((self.newAngle*(20-1))+angle) / 20
 		glRotatef(self.newAngle,0.0,0.0,1.0)
-
-		glMatrixMode(GL_MODELVIEW)
-		glLoadIdentity()
-		#glTranslatef(self.newPositionX*-1, self.newPositionY*-1, 0)
 		gluLookAt(self.newPositionX, self.newPositionY, +1,
 				  self.newPositionX, self.newPositionY, -1,
 				  sin(0),cos(0),0.0)
+
+		glMatrixMode(GL_MODELVIEW)
+		
+		#glTranslatef(self.newPositionX*-1, self.newPositionY*-1, 0)
+		glLoadIdentity()
 		#self.mouseScale = self.newWeightedScale * self.aspect
 
 	def edge_bounce(self, dx, dy, cameraPos):

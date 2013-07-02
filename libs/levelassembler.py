@@ -11,14 +11,18 @@ import box
 import time
 import collectable
 import trigger
+import particle
+import loaders
 
-def imageloader(image_file, placeholder, size):
+def imageloader(image_file, placeholder, size=None, stretch=None):
 	try:
 		i = pyglet.resource.image(image_file)
 		#print(i)
 		#i = i.get_region(0,0,i.width,i.height)
-		#i.width = size[0]
-		#i.height = size[1]
+		if stretch == None: pass
+		else:
+			i.width = stretch[0]
+			i.height = stretch[1]
 	except:
 		print('Missing "'+str(image_file)+'." Replacing with "'+str(placeholder)+'."')
 		i = pyglet.resource.image(placeholder)
@@ -26,15 +30,57 @@ def imageloader(image_file, placeholder, size):
 		i.width = size[0]
 		i.height = size[1]
 	return i
+'''
+def spriteloader(image_file, 
+				placeholder = 'placeholder.png',
+				anchor, 
+				size, 
+				batch = None, 
+				group = None, 
+				linear_intrpolation=False,):
+	try:
+		image = pyglet.resource.image(image_file)
+	except:
+		image = pyglet.resource.image(placeholder)
+	sprite = pyglet.sprite.Sprite(image, batch = batch, group = group)
 
+	if size != None:
+		sprite.image.width = size[0]
+		sprite.image.height = size[1]
+
+	if anchor[0] == 'center':
+		sprite.image.anchor_x = image.width//2
+	if anchor[1] == 'center':
+		sprite.image.anchor_y = image.height//2
+	if anchor[0] == 'top':
+		sprite.image.anchor_x = image.width
+	if anchor[1] == 'right':
+		sprite.image.anchor_y = image.height
+
+	if linear_intrpolation:
+		tex = self.parallaxImage.get_texture()
+		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+	return sprite
+'''
 class Game_Level:
-	def __init__(self, map_zip, space, debug_batch, level_batch, ui_batch, 
-				ordered_group_pbg, ordered_group_level, ordered_group_fg, ordered_group_fg3):
+	def __init__(self, map_zip, space, screen_res, debug_batch, background_batch, level_batch, ui_batch, 
+				ordered_group_bg, 
+				ordered_group_pbg, 
+				ordered_group_pbg2, 
+				ordered_group_lbg, 
+				ordered_group_lfg, 
+				ordered_group_lfg2, 
+				ordered_group_lfg3):
 		self.debugBatch = debug_batch
 		self.levelBatch = level_batch
+		self.ordered_group_bg = ordered_group_bg
 		self.ordered_group_pbg = ordered_group_pbg
-		self.ordered_group_level = ordered_group_level
-		self.ordered_group_fg = ordered_group_fg
+		self.ordered_group_lbg = ordered_group_lbg
+		self.ordered_group_lfg = ordered_group_lfg
+		self.ordered_group_lfg2 = ordered_group_lfg2
+		self.ordered_group_lfg3 = ordered_group_lfg3
+
 		################################ Map Config
 		self.map_zip = zipfile.ZipFile(map_zip)
 		#self.map_config_file = self.map_zip.extract('map_config.cfg', path = 'temp')
@@ -74,6 +120,7 @@ class Game_Level:
 		################################ Adding Static Lines
 		self.map_file = open('resources/temp/map_layout.map')
 		self.space = space
+		self.screen_res = screen_res
 		static_body = pymunk.Body()
 		dirt_body = pymunk.Body()
 
@@ -144,76 +191,70 @@ class Game_Level:
 				self.detectors.append(line)
 				continue
 
+		self.map_zip.close()
+
 		self.space.add(self.map_segments)
 		for line in self.map_segments:
 			p1 = line.a # start of seg
 			p2 = line.b # end of seg
-			self.stuff = self.debugBatch.add(2, pyglet.gl.GL_LINES, ordered_group_fg,
+			self.stuff = self.debugBatch.add(2, pyglet.gl.GL_LINES, ordered_group_lfg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
-		#glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		
+
 		if self.lowres == 'True':
-			# make the parallax image 100px bigger than the map image.
-			self.parallaxImage = imageloader('parallaxlow.png', 'placeholder.png', #empty is a 1x1 alpha png special testing case. change to placeholder.png 
-											(self.mapWidth+100,self.mapHeight+100)) #.25
-			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-			self.parallaxImage_sprite.image.anchor_x = self.parallaxImage.width//2
-			self.parallaxImage_sprite.image.anchor_y = self.parallaxImage.height//2
-			parallaxtex = self.parallaxImage.get_texture()
-			glTexParameteri(parallaxtex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+			self.level_sprite 		= loaders.spriteloader('levellow.png', 
+															anchor=(25,25),
+															batch=level_batch,
+															group=ordered_group_lbg,
+															linear_intrpolation=True)
+			self.parallax_sprite_1 	= loaders.spriteloader('parallaxlow1.png', 
+														  	anchor=('center','center'),
+														  	batch=level_batch,
+														  	group=ordered_group_pbg2,
+														  	linear_intrpolation=True)
+			self.parallax_sprite_1.y = self.mapHeight/2 
+			self.parallax_sprite_2 	= loaders.spriteloader('parallaxlow2.png', 
+														  	anchor=('center',50),
+														  	batch=level_batch,
+														  	group=ordered_group_pbg,
+														  	linear_intrpolation=True)
 
-			self.levelImage = imageloader('levellow.png', 'placeholder.png', (4,4))
-			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
-			self.levelImage_sprite.image.anchor_x = self.levelImage_sprite.image.width//2
-			self.levelImage_sprite.image.anchor_y = self.levelImage_sprite.image.height//2
-			self.levelImage_sprite.x = self.mapWidth//2
-			self.levelImage_sprite.y = self.mapHeight//2
-			leveltex = self.levelImage.get_texture()
-			glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-		elif self.lowres == 'False':
-			self.parallaxImage = imageloader('blank.png', 'placeholder.png', #empty is a 1x1 alpha png special testing case. change to placeholder.png 
-											(self.mapWidth+100,self.mapHeight+100)) #.25
-			self.parallaxImage_sprite = pyglet.sprite.Sprite(self.parallaxImage, batch = level_batch, group = ordered_group_pbg)
-			self.parallaxImage_sprite.image.anchor_x = self.parallaxImage.width//2
-			self.parallaxImage_sprite.image.anchor_y = self.parallaxImage.height//2
-			#parallaxtex = self.parallaxImage.get_texture()
-			#glTexParameteri(parallaxtex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			#self.parallaxImage_sprite.scale = .5
 
-			self.levelImage = imageloader('level.png', 'placeholder.png', (self.mapWidth, self.mapHeight))
-			#self.levelImage.width = self.levelImage.width//2
-			#self.levelImage.height = self.levelImage.height//2
-			self.levelImage_sprite = pyglet.sprite.Sprite(self.levelImage, batch = level_batch, group = ordered_group_level)
-			self.levelImage_sprite.x = -25
-			self.levelImage_sprite.y = -25
-			self.levelImage_sprite.scale = .5
-		else:
-			print("Error with boolean 'LowRes.' '"+str(self.lowres)+"' is not a correct value. LowRes must equal either 'True' or 'False.'")
-	
-			#leveltex = self.levelImage.get_texture()
-			#glTexParameteri(leveltex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-			#self.levelImage_sprite.scale = .5
-
-		self.map_zip.close()
+		self.background = loaders.spriteloader('bg.png', 
+											  	anchor=('center','center'),
+											  	#size = (100,100),
+											  	batch=level_batch,
+											  	group=ordered_group_bg,
+											  	linear_intrpolation=True)
 
 		for line in self.collectables:
-			line.setup_pyglet_batch(level_batch, ui_batch, ordered_group_fg3)
+			line.setup_pyglet_batch(level_batch, ui_batch, ordered_group_lfg3)
 		for line in self.boxes:
-			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_lfg)
 		for line in self.bridges:
-			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_lfg)
 		for line in self.mobis:
-			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg)
+			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_lfg2)
+
 		for line in self.triggers:
-			line.setup_pyglet_batch(debug_batch, level_batch, ordered_group_fg3)
+			line.setup_pyglet_batch(debug_batch, level_batch, ui_batch, ordered_group_lfg3, screen_res)
 
 		#self.levelScore = 0
 
 	def update(self, player_pos, angle, camera_offset, scale, keys_held):
 		self.camera_offset = camera_offset
 		self.scale = scale
-		self.parallaxImage_sprite.x = self.mapWidth/2 + (self.camera_offset[0]*.5) - self.mapWidth/4 
-		self.parallaxImage_sprite.y = self.mapHeight/2 +(self.camera_offset[1]*.5) - self.mapHeight/4
+		
+		self.parallax_sprite_2.x = self.mapWidth/2 + (self.camera_offset[0]*.25) - self.mapWidth/8 #- self.mapWidth/4 
+
+		self.background.scale = scale[0]/(self.screen_res[0]/2)
+		self.background.x = self.camera_offset[0]
+		self.background.y = self.camera_offset[1]
+		
+		self.parallax_sprite_1.x = self.mapWidth/2 + (self.camera_offset[0]*.5) - self.mapWidth/4 
+		#self.parallax_sprite_1.y = self.mapHeight/2 +(self.camera_offset[1]*.5) - self.mapHeight/4
+
 		for line in self.bridges:
 			line.draw()
 		for line in self.jellies:

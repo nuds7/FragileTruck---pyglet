@@ -3,7 +3,90 @@ from pyglet.gl import *
 import pymunk
 from pymunk import Vec2d
 import random
-from random import randrange
+from random import randrange,uniform
+import levelassembler 
+
+class SimpleParticle:
+	def __init__(self, pos, grav, vel, rot, life, image, batch, rainbow_mode = False, random_scale = False):
+		self.pos = Vec2d(pos)
+		self.vel = Vec2d(vel)
+		self.grav = Vec2d(grav)
+		self.rot = rot
+		self.life = life + randrange(0,30)
+
+		self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
+		self.sprite.image.anchor_x = self.sprite.image.width//2
+		self.sprite.image.anchor_y = self.sprite.image.height//2
+		self.sprite.x = pos[0]
+		self.sprite.y = pos[1]
+		self.sprite.batch = batch
+		if rainbow_mode:
+			self.sprite.color = (randrange(0,255),
+								 randrange(0,255),
+								 randrange(0,255),)
+		if random_scale:
+			self.sprite.scale = uniform(.5, 2)
+			#print(self.sprite.scale)
+
+class SimpleEmitter:
+	def __init__(self, image, batch, stretch = None, max_active = None, rainbow_mode = False, random_scale = False, fade_out = False):
+		image = levelassembler.imageloader(image, 'placeholder.png', (2,40), stretch)
+		tex = image.get_texture()
+		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		self.image = image
+		self.batch = batch
+		self.particles = []
+		self.max_active = max_active
+		self.rainbow_mode = rainbow_mode
+		self.random_scale = random_scale
+		self.fade_out = fade_out
+	def emit(self, amount, pos, grav, vel, rot, life):
+		for i in range(amount):
+			n_vel = [vel[0],vel[1]]
+			if isinstance(vel[0], tuple):
+				n_vel[0] = uniform(vel[0][0],vel[0][1])
+			if isinstance(vel[1], tuple):
+				n_vel[1] = uniform(vel[1][0],vel[1][1])
+			n_rot = rot
+			if isinstance(rot, tuple):
+				n_rot = uniform(rot[0],rot[1])
+
+			if self.max_active == None:
+				p = SimpleParticle(pos, 
+								   grav, 
+								   n_vel, 
+								   n_rot, 
+								   life, 
+								   self.image, 
+								   self.batch, 
+								   rainbow_mode = self.rainbow_mode,
+								   random_scale = self.random_scale)
+				self.particles.append(p)
+			elif len(self.particles) < self.max_active:
+				p = SimpleParticle(pos, 
+								   grav, 
+								   n_vel, 
+								   n_rot, 
+								   life, 
+								   self.image, 
+								   self.batch, 
+								   rainbow_mode = self.rainbow_mode,
+								   random_scale = self.random_scale)
+				self.particles.append(p)
+	def update(self):
+		for p in self.particles:
+			p.pos = p.pos + p.vel
+			p.vel += p.grav
+			p.life -= 1
+			p.sprite.x = p.pos[0]
+			p.sprite.y = p.pos[1]
+			p.sprite.rotation += p.rot
+			if self.fade_out:
+				if p.life <= 13:
+					p.sprite.opacity -= 19
+
+		self.particles = [p for p in self.particles if p.life>0]
 
 class Particle:
 	def __init__ (self, space, color, batch, order_group):
@@ -21,8 +104,7 @@ class Particle:
 		self.list_size = 1
 		self.particle_line_list = batch.add(1, pyglet.gl.GL_LINES, order_group,
                             ('v2f'),
-                            ('c3B'),
-                            )
+                            ('c3B'),)
 
 	def colliding(self, space, arb): # for 
 		self.collidingBool = True

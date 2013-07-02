@@ -22,7 +22,8 @@ import mobi
 import levelbuilder
 from datetime import datetime
 from random import randrange,uniform
-pyglet.resource.path = ['resources','resources/images','resources/temp','resources/temp/images']
+pyglet.resource.path = ['resources','resources/images', 'resources/images/tips',
+						'resources/temp','resources/temp/images', 'resources/temp/images/tips']
 pyglet.resource.reindex()
 
 class FirstWindow(pyglet.window.Window):
@@ -38,13 +39,16 @@ class FirstWindow(pyglet.window.Window):
 		glLineWidth(2)
 
 		self.debug_batch  		= pyglet.graphics.Batch()
+		self.background_batch 	= pyglet.graphics.Batch()
 		self.level_batch  		= pyglet.graphics.Batch()
 		self.ui_batch 	  		= pyglet.graphics.Batch()
-		self.levelForeground3 	= pyglet.graphics.OrderedGroup(4)
-		self.levelForeground2 	= pyglet.graphics.OrderedGroup(3)
-		self.levelForeground 	= pyglet.graphics.OrderedGroup(2)
-		self.levelBackground 	= pyglet.graphics.OrderedGroup(1)
-		self.parallaxBackground = pyglet.graphics.OrderedGroup(0)
+		self.lfg3 	= pyglet.graphics.OrderedGroup(13)
+		self.lfg2 	= pyglet.graphics.OrderedGroup(11)
+		self.lfg 	= pyglet.graphics.OrderedGroup(9)
+		self.lbg 	= pyglet.graphics.OrderedGroup(7)
+		self.pbg2 	= pyglet.graphics.OrderedGroup(5)
+		self.pbg 	= pyglet.graphics.OrderedGroup(3)
+		self.bg 	= pyglet.graphics.OrderedGroup(1)
 
 		self.space                      = pymunk.Space()
 		self.space.enable_contact_graph = True
@@ -58,12 +62,22 @@ class FirstWindow(pyglet.window.Window):
 		self.lvl_iter_num = 0
 		selected_map = 'dkcopy'
 		self.map_zip = "levels/"+str(selected_map)+".zip"
-		self.level = levelassembler.Game_Level(self.map_zip, self.space, self.debug_batch, self.level_batch, self.ui_batch,
-											self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
+		self.level = levelassembler.Game_Level(self.map_zip, self.space, (self.width,self.height), 
+											self.debug_batch, 
+											self.background_batch,
+											self.level_batch, 
+											self.ui_batch,
+											self.bg, 
+											self.pbg, 
+											self.pbg2,
+											self.lbg,
+											self.lfg, 
+											self.lfg2, 
+											self.lfg3)
 
 		#self.space.add_collision_handler(1,2,None,self.vehicle_particles.colliding, None, self.vehicle_particles.collided)
 		pyglet.clock.schedule_interval(self.keyboard_input, 1/60.0) #schedule a function to move 60x per second (0.01==60x/s, 0.05==20x/s)
-		#pyglet.clock.schedule_interval(self.update, 1/120.0)
+		pyglet.clock.schedule_interval(self.update, 1/60.0)
 		self.scroll_zoom = 0
 		self.keys_held = [] # maintain a list of keys held
 		self.debug = False
@@ -71,7 +85,7 @@ class FirstWindow(pyglet.window.Window):
 		self.cameraPosX = self.level.mapWidth//2
 		self.cameraPosY = self.level.mapHeight//2
 		self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
-		self.builder = levelbuilder.LevelBuilder(self.debug_batch, self.levelForeground3, self.levelForeground2, self.levelForeground)
+		self.builder = levelbuilder.LevelBuilder(self.debug_batch, self.lfg3, self.lfg2, self.lfg)
 		self.mode = 'None'
 		self.count = 0
 		self.drag_info = (0,0)
@@ -109,25 +123,37 @@ class FirstWindow(pyglet.window.Window):
 											color = (0,0,0,200),
 											batch = self.ui_batch)
 		self.level_label.text = self.level.mapName
+
+		self.emitter = particle.SimpleEmitter('oprah.png', self.level_batch, 
+											  stretch=(10,9),
+											  random_scale = True,
+											  #rainbow_mode = True
+											  )
+		
+
 	def on_draw(self):
 		self.space.step(0.015)
 		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 0,
 						  (self.camera.newPositionX,self.camera.newPositionY),
 						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale), 
 						  self.keys_held)
+		self.camera.hud_mode() # draw hud after this
+		self.background_batch.draw()
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 							(self.scroll_zoom + self.height//4), 
 							0, [5,5], 10)
 		self.clear()
 		glClearColor(20,80,20,0)
-
 		self.level_batch.draw()
 		self.debug_batch.draw()
+		#self.emitter.emit(5, (self.camera.newPositionX,self.camera.newPositionY), 
+		#				 (0,-0.2), [2,(2,4)], 3, 40)
+		self.emitter.update()
 		self.camera.hud_mode() # draw hud after this
 		#self.fps_label.text = 'FPS: ' + str(int(pyglet.clock.get_fps()))
 		self.ui_batch.draw()
+
 		self.builder.update()
-		
 		if self.mode == "Segment":
 			self.count = len(self.builder.segments_to_add)/2
 			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)+" | Position: "+str(self.drag_info)
@@ -192,8 +218,18 @@ class FirstWindow(pyglet.window.Window):
 				self.lvl_iter_num = 0
 			print('Loading level... '+str(self.lvllist[self.lvl_iter_num]))
 			self.builder = levelbuilder.LevelBuilder(self.debug_batch, self.levelForeground3, self.levelForeground2, self.levelForeground)
-			self.level = levelassembler.Game_Level('levels/'+self.lvllist[self.lvl_iter_num], self.space, self.debug_batch, self.level_batch, self.ui_batch,
-											      self.parallaxBackground, self.levelBackground, self.levelForeground, self.levelForeground3)
+			self.level = levelassembler.Game_Level(self.map_zip, self.space, (self.width,self.height), 
+											self.debug_batch, 
+											self.background_batch,
+											self.level_batch, 
+											self.ui_batch,
+											self.bg, 
+											self.pbg, 
+											self.pbg2,
+											self.lbg,
+											self.lfg, 
+											self.lfg2, 
+											self.lfg3)
 			self.level_label.text = self.level.mapName
 			# reset camera
 			self.camera = camera.Camera((self.width,self.height), (self.level.mapWidth,self.level.mapHeight), (0,0))
@@ -221,6 +257,10 @@ class FirstWindow(pyglet.window.Window):
 		if button == 1:
 			self.builder.clicked_pos = worldMouse
 			print(self.builder.clicked_pos)
+		if button == 2:
+			self.emitter.emit(13, worldMouse, 
+						     (0,-0.2), [(-2,2),(4,5)], (-5,5), 40)
+
 
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
 		aspect = (self.width/self.height)
