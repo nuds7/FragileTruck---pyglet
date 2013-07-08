@@ -4,6 +4,7 @@ import pymunk
 from pymunk import Vec2d
 import math
 import levelassembler
+import loaders
 
 class Elevator:
     def __init__(self, space, position, size, target, padding, speed, image):
@@ -50,21 +51,16 @@ class Elevator:
                                 self.top_body.position[1] + padding_top)
             self.speed *= -1
         
-        alpha = 10
+        alpha = 100
         self.color = (200,0,0,alpha)
         self.color2 = (0,200,0,alpha)
         self.color3 = (200,200,0,alpha)
 
-        image = levelassembler.imageloader(image, 'placeholder.png', size)
-        tex = image.get_texture()
-        glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
-        #self.sprite.image.width = size[0]
-        #self.sprite.image.height = size[1]
-        self.sprite.image.anchor_x = self.sprite.image.width//2
-        self.sprite.image.anchor_y = self.sprite.image.height//2
-        #self.sprite.scale = .5
+        self.sprite = loaders.spriteloader(image,
+                                           size = size,
+                                           anchor = ('center','center'),
+                                           linear_interpolation = True
+                                           )
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
@@ -170,21 +166,15 @@ class ObjectPivot:
                             position[1] - padding_bottom, #  - hinge_pos[1], # bottom
                             position[0] + padding_right, # - hinge_pos[0], # right
                             position[1] + padding_top, ) # - hinge_pos[1]) # top
-        alpha = 10
+        alpha = 100
         self.color = (200,0,0,alpha)
         self.color2 = (0,200,0,alpha)
         self.color3 = (200,200,0,alpha)
 
-        image = levelassembler.imageloader(image, 'placeholder.png', size)
-        tex = image.get_texture()
-        glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
-        #self.sprite.image.width = size[0]
-        #self.sprite.image.height = size[1]
-        self.sprite.image.anchor_x = self.sprite.image.width//2
-        self.sprite.image.anchor_y = self.sprite.image.height//2
-        #self.sprite.scale = .5
+        self.sprite = loaders.spriteloader(image,
+                                           size = size,
+                                           anchor = ('center','center'),
+                                           linear_interpolation = True)
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
@@ -334,7 +324,7 @@ class SpiralPivot:
         self.color = (200,0,0)
         self.color2 = (0,200,0)
         self.color3 = (200,200,0)
-        
+        '''
         image = levelassembler.imageloader(image, 'placeholder.png', (10,10))
         tex = image.get_texture()
         glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
@@ -345,6 +335,12 @@ class SpiralPivot:
         self.sprite.image.anchor_x = 82
         self.sprite.image.anchor_y = 140
         #self.sprite.scale = .5
+        '''
+        self.sprite = loaders.spriteloader(image,
+                                           #size = size,
+                                           anchor = (82,140),
+                                           linear_interpolation = True
+                                           )
         
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):

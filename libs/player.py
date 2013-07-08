@@ -45,7 +45,7 @@ class Circle:
                             ('c3B', (0,0,0)*self.list_length)
                             )
 
-class Player:
+class Truck:
     def __init__(self, space, body_position, level_batch, ordered_group_lfg, ordered_group_lfg2, ordered_group_lfg3):
         self.space = space
         #self.map_size = map_size
@@ -131,7 +131,7 @@ class Player:
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=ordered_group_lfg2,
-                                                  linear_intrpolation=True)
+                                                  linear_interpolation=True)
 
         self.wheel_sprite_l = loaders.spriteloader('wheel.png', 
                                                   anchor=('center','center'),
@@ -139,7 +139,7 @@ class Player:
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=ordered_group_lfg3,
-                                                  linear_intrpolation=True)
+                                                  linear_interpolation=True)
 
         self.wheel_sprite_r = loaders.spriteloader('wheel.png', 
                                                   anchor=('center','center'),
@@ -147,7 +147,7 @@ class Player:
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=ordered_group_lfg3,
-                                                  linear_intrpolation=True)
+                                                  linear_interpolation=True)
 
 
         self.suspension_sprite_l = loaders.spriteloader('suspension.png', 
@@ -156,7 +156,7 @@ class Player:
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=ordered_group_lfg,
-                                                  linear_intrpolation=True)
+                                                  linear_interpolation=True)
 
         self.suspension_sprite_r = loaders.spriteloader('suspension.png', 
                                                   anchor=('center',9),
@@ -164,7 +164,7 @@ class Player:
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=ordered_group_lfg,
-                                                  linear_intrpolation=True)
+                                                  linear_interpolation=True)
 
 
         self.mouseGrabbed = False
@@ -192,22 +192,23 @@ class Player:
         self.right_wheel_b.angular_velocity = 0
         self.right_wheel_b.angle            = 0
 
-    def mouse_grab_press(self, mouse_coords):
-        mouseX, mouseY = mouse_coords
+    def mouse_grab_press(self, mouse_pos):
         if self.grabFirstClick == True:
             self.mouseBody = pymunk.Body()
             self.grabFirstClick = False
-        self.mouseBody.position = mouseX, mouseY
+        print(mouse_pos)
+        self.mouseBody.position = mouse_pos
         self.mouseGrabSpring = pymunk.constraint.DampedSpring(self.mouseBody, self.car_body, (0,0), (0,0), 0, 20, 1)
         self.space.add(self.mouseGrabSpring)
         self.mouseGrabbed = True
     def mouse_grab_drag(self, mouse_coords):
-        self.mouseBody.position = mouse_coords
+        if self.mouseGrabbed == True:
+            self.mouseBody.position = mouse_coords
     def mouse_grab_release(self):
-        self.space.remove(self.mouseGrabSpring)
-        self.mouseGrabbed = False
-
-    def draw(self):
+        if self.mouseGrabbed == True:
+            self.space.remove(self.mouseGrabSpring)
+            self.mouseGrabbed = False
+    def update(self):
         if self.mouseGrabbed == True:
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
                                 ('v2f', ( self.mouseBody.position[0], self.mouseBody.position[1],self.car_body.position[0], self.car_body.position[1])),

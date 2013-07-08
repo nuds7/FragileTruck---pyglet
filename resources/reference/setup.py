@@ -31,5 +31,13 @@ setup( 	name = "Fragile Truck",
 								  #appendScriptToExe = True,
 								  #compress = True,
 								  #path = path,
+								  ),
+						Executable(script = "leveleditor.py", 
+								  base = "Win32GUI", 
+								  targetName = "leveleditor.exe",
+								  copyDependentFiles = True,
+								  #appendScriptToExe = True,
+								  #compress = True,
+								  #path = path,
 								  )]
 )

@@ -22,19 +22,15 @@ class Camera(object):
 		self.newAngle = 0
 		self.newWeightedScale = map_size[1]/4
 		self.newTarget = [0,0]
+		self.scale = map_size[1]/4
 		
 	def update(self, target, scale, angle, rate, scaleRate):
 		self.target = target
 		self.scale = scale
 		self.scaleRate = scaleRate
-		#self.angle = angle
 		self.rate = rate
-		
-		if self.scale >= self.map_size[1]//2:
-			self.scale = self.map_size[1]//2
-		if self.scale * self.aspect >= self.map_size[0]//2:
-			self.scale = (self.map_size[0]//2) / self.aspect
-		
+
+
 		if self.target[0] > self.newWeightedScale * self.aspect:
 			self.newTarget[0] = self.target[0]
 		else: 
@@ -53,6 +49,22 @@ class Camera(object):
 			self.newTarget[1] = self.target[1]
 		elif self.target[1] > self.newWeightedScale: 
 			self.newTarget[1] = self.map_size[1] - self.newWeightedScale
+
+		
+		# Keep the scale smaller than the map unless the map is smaller than the screen res
+		if self.map_size[1] > self.screen_size[1]:
+			if self.scale >= self.map_size[1]/2:
+				self.scale = self.map_size[1]/2
+		if self.map_size[0] > self.screen_size[0]:
+			if self.scale*self.aspect >= self.map_size[0]/2:
+				self.scale = (self.map_size[0]/2) / self.aspect
+		
+		# Make the camera center the map if the map is smaller than the screen
+		if self.scale * self.aspect >= self.map_size[0]/2:
+			self.newTarget[0] = self.map_size[0]/2
+		if self.scale >= self.map_size[1]/2:
+			self.newTarget[1] = self.map_size[1]/2
+			
 
 		self.newPositionX = ((self.newPositionX*(self.rate[0]-1))+self.newTarget[0]) / self.rate[0]
 		self.newPositionY = ((self.newPositionY*(self.rate[1]-1))+self.newTarget[1]) / self.rate[1]
@@ -80,34 +92,22 @@ class Camera(object):
 		#self.mouseScale = self.newWeightedScale * self.aspect
 
 	def edge_bounce(self, dx, dy, cameraPos):
-		''' Original code located within "on_mouse_drag"
-		if self.cameraPosX < self.camera.newWeightedScale*aspect:
-			self.camera.newPositionX -= dx*((self.camera.newWeightedScale*aspect)/(self.width/2))
-			self.cameraPosX = self.camera.newWeightedScale*aspect
-		if self.cameraPosX > self.level.mapWidth - self.camera.newWeightedScale*aspect:
-			self.camera.newPositionX -= dx*((self.camera.newWeightedScale*aspect)/(self.width/2))
-			self.cameraPosX = self.level.mapWidth - self.camera.newWeightedScale*aspect
-		if self.cameraPosY < self.camera.newWeightedScale:
-			self.camera.newPositionY -= dy*((self.camera.newWeightedScale)/(self.height/2))
-			self.cameraPosY = (self.camera.newWeightedScale)
-		if self.cameraPosY > self.level.mapHeight - self.camera.newWeightedScale:
-			self.camera.newPositionY -= dy*((self.camera.newWeightedScale)/(self.height/2))
-			self.cameraPosY = self.level.mapHeight - (self.camera.newWeightedScale)
-		'''
 		if cameraPos[0] < self.newWeightedScale*self.aspect:
 			self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
 			cameraPos[0] = self.newWeightedScale*self.aspect
 		if cameraPos[0] > self.map_size[0] - self.newWeightedScale*self.aspect:
 			self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
 			cameraPos[0] = self.map_size[0] - self.newWeightedScale*self.aspect
+			
 		if cameraPos[1] < self.newWeightedScale:
 			self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
 			cameraPos[1] = (self.newWeightedScale)
 		if cameraPos[1] > self.map_size[1] - self.newWeightedScale:
 			self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
-			cameraPos[1] = self.map_size[1] - (self.newWeightedScale)
-
+			cameraPos[1] = self.map_size[1] - self.newWeightedScale
 		return cameraPos
+	def zoom(self, zoom):
+		pass
 
 	def hud_mode(self):
 		glMatrixMode(GL_PROJECTION)

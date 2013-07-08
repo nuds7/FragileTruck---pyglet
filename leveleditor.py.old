@@ -1,3 +1,5 @@
+import os
+os.putenv('PYGLET_SHADOW_WINDOW', '0')
 import pyglet
 from pyglet.gl import *
 import pymunk
@@ -22,8 +24,13 @@ import mobi
 import levelbuilder
 from datetime import datetime
 from random import randrange,uniform
-pyglet.resource.path = ['resources','resources/images', 'resources/images/tips',
-						'resources/temp','resources/temp/images', 'resources/temp/images/tips']
+pyglet.resource.path = ['resources',
+						'resources/images', 
+						'resources/images/tips', 
+						'resources/images/dkcopy',
+						'resources/temp',
+						'resources/temp/images', 
+						'resources/temp/images/tips']
 pyglet.resource.reindex()
 
 class FirstWindow(pyglet.window.Window):
@@ -42,13 +49,15 @@ class FirstWindow(pyglet.window.Window):
 		self.background_batch 	= pyglet.graphics.Batch()
 		self.level_batch  		= pyglet.graphics.Batch()
 		self.ui_batch 	  		= pyglet.graphics.Batch()
-		self.lfg3 	= pyglet.graphics.OrderedGroup(13)
-		self.lfg2 	= pyglet.graphics.OrderedGroup(11)
-		self.lfg 	= pyglet.graphics.OrderedGroup(9)
-		self.lbg 	= pyglet.graphics.OrderedGroup(7)
-		self.pbg2 	= pyglet.graphics.OrderedGroup(5)
-		self.pbg 	= pyglet.graphics.OrderedGroup(3)
-		self.bg 	= pyglet.graphics.OrderedGroup(1)
+		self.lfg3 				= pyglet.graphics.OrderedGroup(17)
+		self.lfg2 				= pyglet.graphics.OrderedGroup(15)
+		self.lfg 				= pyglet.graphics.OrderedGroup(13)
+		self.lbg 				= pyglet.graphics.OrderedGroup(11)
+		self.pbg4				= pyglet.graphics.OrderedGroup(9 )
+		self.pbg3				= pyglet.graphics.OrderedGroup(7 )
+		self.pbg2 				= pyglet.graphics.OrderedGroup(5 )
+		self.pbg 				= pyglet.graphics.OrderedGroup(3 )
+		self.bg 				= pyglet.graphics.OrderedGroup(1 )
 
 		self.space                      = pymunk.Space()
 		self.space.enable_contact_graph = True
@@ -60,7 +69,7 @@ class FirstWindow(pyglet.window.Window):
 			self.lvllist.append(lvl)
 			print(str(len(self.lvllist))+". "+str(lvl))
 		self.lvl_iter_num = 0
-		selected_map = 'dkcopy'
+		selected_map = '1-1icy'
 		self.map_zip = "levels/"+str(selected_map)+".zip"
 		self.level = levelassembler.Game_Level(self.map_zip, self.space, (self.width,self.height), 
 											self.debug_batch, 
@@ -70,6 +79,8 @@ class FirstWindow(pyglet.window.Window):
 											self.bg, 
 											self.pbg, 
 											self.pbg2,
+											self.pbg3,
+											self.pbg4,
 											self.lbg,
 											self.lfg, 
 											self.lfg2, 
@@ -133,10 +144,7 @@ class FirstWindow(pyglet.window.Window):
 
 	def on_draw(self):
 		self.space.step(0.015)
-		self.level.update((self.camera.newPositionX,self.camera.newPositionY), 0,
-						  (self.camera.newPositionX,self.camera.newPositionY),
-						  (self.camera.newWeightedScale*self.aspect,self.camera.newWeightedScale), 
-						  self.keys_held)
+		self.level.update(self.keys_held)
 		self.camera.hud_mode() # draw hud after this
 		self.background_batch.draw()
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
@@ -165,6 +173,7 @@ class FirstWindow(pyglet.window.Window):
 
 	def update(self, dt):
 		pass
+
 
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)

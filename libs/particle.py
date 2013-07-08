@@ -5,21 +5,21 @@ from pymunk import Vec2d
 import random
 from random import randrange,uniform
 import levelassembler 
+import loaders
 
 class SimpleParticle:
-	def __init__(self, pos, grav, vel, rot, life, image, batch, rainbow_mode = False, random_scale = False):
+	def __init__(self, pos, grav, vel, rot, life, image, batch, ordered_group=None, rainbow_mode = False, random_scale = False):
 		self.pos = Vec2d(pos)
 		self.vel = Vec2d(vel)
 		self.grav = Vec2d(grav)
 		self.rot = rot
 		self.life = life + randrange(0,30)
-
-		self.sprite = pyglet.sprite.Sprite(image) # batch = level_batch, group = ordered_group)
-		self.sprite.image.anchor_x = self.sprite.image.width//2
-		self.sprite.image.anchor_y = self.sprite.image.height//2
-		self.sprite.x = pos[0]
-		self.sprite.y = pos[1]
-		self.sprite.batch = batch
+		self.sprite = loaders.spriteloader(image,
+										   pos = pos,
+										   anchor = ('center', 'center'),
+										   batch = batch, 
+										   group = ordered_group,
+										   linear_interpolation = True)
 		if rainbow_mode:
 			self.sprite.color = (randrange(0,255),
 								 randrange(0,255),
@@ -29,13 +29,16 @@ class SimpleParticle:
 			#print(self.sprite.scale)
 
 class SimpleEmitter:
-	def __init__(self, image, batch, stretch = None, max_active = None, rainbow_mode = False, random_scale = False, fade_out = False):
-		image = levelassembler.imageloader(image, 'placeholder.png', (2,40), stretch)
-		tex = image.get_texture()
-		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+	def __init__(self, image, batch, 
+				stretch = None, 
+				max_active = None, 
+				ordered_group = None, 
+				rainbow_mode = False, 
+				random_scale = False, 
+				fade_out = False):
 		self.image = image
 		self.batch = batch
+		self.ordered_group = ordered_group
 		self.particles = []
 		self.max_active = max_active
 		self.rainbow_mode = rainbow_mode
@@ -60,6 +63,7 @@ class SimpleEmitter:
 								   life, 
 								   self.image, 
 								   self.batch, 
+								   ordered_group = self.ordered_group,
 								   rainbow_mode = self.rainbow_mode,
 								   random_scale = self.random_scale)
 				self.particles.append(p)
@@ -71,6 +75,7 @@ class SimpleEmitter:
 								   life, 
 								   self.image, 
 								   self.batch, 
+								   ordered_group = self.ordered_group,
 								   rainbow_mode = self.rainbow_mode,
 								   random_scale = self.random_scale)
 				self.particles.append(p)

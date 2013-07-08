@@ -5,6 +5,7 @@ from pymunk import Vec2d
 import math
 from math import sin,cos
 import levelassembler
+import loaders
 
 class Bridge:
 	def __init__(self, space, starting_position, segment_size, amount, slack, image):
@@ -77,12 +78,17 @@ class Bridge:
 		glPointSize(4)
 
 		self.sprites = []
-		
+		'''
 		image = levelassembler.imageloader(image, 'placeholder.png', (self.segment_size))
 		image.anchor_x = image.width/2
 		image.anchor_y = image.height/2
+		'''
 		for i in range(amount):
-			sprite = pyglet.sprite.Sprite(image)
+			sprite = loaders.spriteloader(image,
+                                           size = segment_size,
+                                           anchor = ('center','center'),
+                                           linear_interpolation = True
+                                           )
 			#sprite.scale = .5
 			self.sprites.append(sprite)
 	def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group):
