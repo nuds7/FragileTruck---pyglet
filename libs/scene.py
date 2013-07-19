@@ -309,7 +309,7 @@ class Game_Scene(Scene):
 
 		self.camera.update(self.level.player.car_body.position, 
 							(self.camera_zoom), 
-							0, [20,15],20)
+							sin(self.level.player.car_body.angle)*-10, [20,15], 20)
 
 		glClearColor(1,1,1,1)
 		if not self.debug:
@@ -414,8 +414,8 @@ class Menu_Scene(Scene):
 		self.editor_label.set_style('background_color', (0,0,0,0)) 
 
 		self.camera = camera.Camera(screen_res, (self.menu.mapWidth,self.menu.mapHeight), (0,0))
-		self.cameraPosX = self.menu.cameraStartX
-		self.cameraPosY = self.menu.cameraStartY
+		self.cameraPosX = self.menu.cameraHomeX
+		self.cameraPosY = self.menu.cameraHomeY
 		self.camera_zoom = self.screen_res[1]/2
 		self.debug = False
 		self.level_selected = ''
@@ -436,7 +436,7 @@ class Menu_Scene(Scene):
 			self.editor_label.set_style('background_color', (0,0,0,0))
 			self.editor_label.color = (255,25,25,0)
 
-		glClearColor(.1,.1,.1,.5)
+		glClearColor(.9,.9,.9,1)
 		if not self.debug: 
 			self.level_batch.draw()
 		if self.debug:
@@ -473,10 +473,8 @@ class Menu_Scene(Scene):
 				self.camera_zoom -= 30*abs(scroll_y)
 	def on_mouse_press(self, x, y, button, modifiers, world_mouse):
 		for b in self.menu.buttons:
-			b.click(world_mouse, button, (self.camera.newPositionX,self.camera.newPositionY))
-			if b.camera_move == True:
-				self.cameraPosX = b.camera_target_x
-				self.cameraPosY = b.camera_target_y
+			b.press(world_mouse, button)
+
 		for box in self.menu.level_boxes:
 			box.mouse_buttons = button
 			if button == 2 or button == 3:
@@ -490,20 +488,25 @@ class Menu_Scene(Scene):
 					self.manager.go_to(Game_Scene(
 										'levels/'+box.name, 
 										self.screen_res))
+	def on_mouse_release(self, x, y, button, modifiers, world_mouse):
+		if button == 2:
+			for box in self.menu.level_boxes:
+				box.mouse_grab_release()
+
+		for b in self.menu.buttons:
+			b.release(world_mouse, button, (self.camera.newPositionX,self.camera.newPositionY))
+			if b.camera_move == True:
+				self.cameraPosX = b.camera_target_x
+				self.cameraPosY = b.camera_target_y
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers, world_mouse):
 		if buttons == 4:
 			self.cameraPos = self.camera.edge_bounce(dx,dy,[self.cameraPosX,self.cameraPosY])
 			self.cameraPosX,self.cameraPosY = self.cameraPos[0],self.cameraPos[1]
-			#self.cameraPosY = self.cameraPos[1]
 			self.cameraPosX -= dx*((self.camera.newWeightedScale*self.aspect)/(self.screen_res[0]/2))
 			self.cameraPosY -= dy*((self.camera.newWeightedScale)/(self.screen_res[1]/2))
 		if buttons == 2:
 			for box in self.menu.level_boxes:
 				box.mouse_grab_drag(world_mouse)
-	def on_mouse_release(self, x, y, button, modifiers, world_mouse):
-		if button == 2:
-			for box in self.menu.level_boxes:
-				box.mouse_grab_release()
 	def on_mouse_motion(self, x, y, dx, dy, world_mouse):
 		for button in self.menu.buttons:
 			button.hover(world_mouse)

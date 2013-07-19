@@ -8,12 +8,23 @@ import levelassembler
 import loaders
 
 class SimpleParticle:
-	def __init__(self, pos, grav, vel, rot, life, image, batch, ordered_group=None, rainbow_mode = False, random_scale = False):
+	def __init__(self, 
+				 pos, 
+				 grav, 
+				 vel, 
+				 rot, 
+				 life, 
+				 image, 
+				 batch, 
+				 ordered_group=None, 
+				 rainbow_mode = False, 
+				 random_scale = False,
+				 life_offset = 1,):
 		self.pos = Vec2d(pos)
 		self.vel = Vec2d(vel)
 		self.grav = Vec2d(grav)
 		self.rot = rot
-		self.life = life + randrange(0,30)
+		self.life = life + randrange(0,life_offset)
 		self.sprite = loaders.spriteloader(image,
 										   pos = pos,
 										   anchor = ('center', 'center'),
@@ -26,7 +37,6 @@ class SimpleParticle:
 								 randrange(0,255),)
 		if random_scale:
 			self.sprite.scale = uniform(.5, 2)
-			#print(self.sprite.scale)
 
 class SimpleEmitter:
 	def __init__(self, image, batch, 
@@ -35,62 +45,70 @@ class SimpleEmitter:
 				ordered_group = None, 
 				rainbow_mode = False, 
 				random_scale = False, 
-				fade_out = False):
-		self.image = image
-		self.batch = batch
-		self.ordered_group = ordered_group
-		self.particles = []
-		self.max_active = max_active
-		self.rainbow_mode = rainbow_mode
-		self.random_scale = random_scale
-		self.fade_out = fade_out
+				fade_out = False,
+				fade_zoom = 0,
+				flicker = False,
+				life_offset = 1):
+		self.image 			= image
+		self.batch 			= batch
+		self.ordered_group 	= ordered_group
+		self.particles 		= []
+		self.max_active 	= max_active
+		self.rainbow_mode 	= rainbow_mode
+		self.random_scale 	= random_scale
+		self.fade_out 		= fade_out
+		self.flicker 		= flicker
+		self.life_offset 	= life_offset
+		self.fade_zoom 		= fade_zoom
 	def emit(self, amount, pos, grav, vel, rot, life):
 		for i in range(amount):
-			n_vel = [vel[0],vel[1]]
-			if isinstance(vel[0], tuple):
-				n_vel[0] = uniform(vel[0][0],vel[0][1])
-			if isinstance(vel[1], tuple):
-				n_vel[1] = uniform(vel[1][0],vel[1][1])
-			n_rot = rot
-			if isinstance(rot, tuple):
-				n_rot = uniform(rot[0],rot[1])
-
-			if self.max_active == None:
-				p = SimpleParticle(pos, 
-								   grav, 
-								   n_vel, 
-								   n_rot, 
-								   life, 
-								   self.image, 
-								   self.batch, 
-								   ordered_group = self.ordered_group,
-								   rainbow_mode = self.rainbow_mode,
-								   random_scale = self.random_scale)
-				self.particles.append(p)
-			elif len(self.particles) < self.max_active:
-				p = SimpleParticle(pos, 
-								   grav, 
-								   n_vel, 
-								   n_rot, 
-								   life, 
-								   self.image, 
-								   self.batch, 
-								   ordered_group = self.ordered_group,
-								   rainbow_mode = self.rainbow_mode,
-								   random_scale = self.random_scale)
-				self.particles.append(p)
+			if i % 20 == 0:
+				n_vel = [vel[0],vel[1]]
+				if isinstance(vel[0], tuple):
+					n_vel[0] = uniform(vel[0][0],vel[0][1])
+				if isinstance(vel[1], tuple):
+					n_vel[1] = uniform(vel[1][0],vel[1][1])
+				n_rot = rot
+				if isinstance(rot, tuple):
+					n_rot = uniform(rot[0],rot[1])
+	
+				sp = SimpleParticle(pos, 
+									grav, 
+									n_vel, 
+									n_rot, 
+									life, 
+									self.image, 
+									self.batch, 
+									ordered_group = self.ordered_group,
+									rainbow_mode = self.rainbow_mode,
+									random_scale = self.random_scale,
+									life_offset = self.life_offset)
+	
+				if self.max_active == None:
+					p = sp
+					self.particles.append(p)
+				elif len(self.particles) < self.max_active:
+					p = sp
+					self.particles.append(p)
 	def update(self):
 		for p in self.particles:
 			p.pos = p.pos + p.vel
 			p.vel += p.grav
 			p.life -= 1
-			p.sprite.x = p.pos[0]
-			p.sprite.y = p.pos[1]
+			p.sprite.x, p.sprite.y = p.pos
 			p.sprite.rotation += p.rot
 			if self.fade_out:
 				if p.life <= 13:
 					p.sprite.opacity -= 19
-
+					p.sprite.scale += self.fade_zoom
+			if self.flicker:
+				random = randrange(1,30)
+				if random == 1:
+					p.sprite.visible = False
+				else:
+					p.sprite.visible = True
+			##
+			##
 		self.particles = [p for p in self.particles if p.life>0]
 
 class Particle:
@@ -108,8 +126,8 @@ class Particle:
 
 		self.list_size = 1
 		self.particle_line_list = batch.add(1, pyglet.gl.GL_LINES, order_group,
-                            ('v2f'),
-                            ('c3B'),)
+							('v2f'),
+							('c3B'),)
 
 	def colliding(self, space, arb): # for 
 		self.collidingBool = True
@@ -155,9 +173,9 @@ class Particle:
 		if len(self.particle_pos_list)//2 > 1:
 			self.particle_line_list.delete()
 		self.particle_line_list = self.batch.add(len(self.particle_pos_list)//2, pyglet.gl.GL_LINES, None,
-                            ('v2f', self.particle_pos_list),
-                            ('c3B', self.color*(len(self.particle_pos_list)//2)),
-                            )
+							('v2f', self.particle_pos_list),
+							('c3B', self.color*(len(self.particle_pos_list)//2)),
+							)
 		'''
 
 		#goopy looking stuff
@@ -165,9 +183,9 @@ class Particle:
 		if len(self.particle_pos_list)//2 > 1:
 			self.particle_point_list.delete()
 		self.particle_point_list = self.batch.add(len(self.particle_pos_list)//2, pyglet.gl.GL_POINTS, None,
-                            ('v2f', self.particle_pos_list),
-                            ('c3B', self.color*(len(self.particle_pos_list)//2)),
-                            )
+							('v2f', self.particle_pos_list),
+							('c3B', self.color*(len(self.particle_pos_list)//2)),
+							)
 		'''
 
 	

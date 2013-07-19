@@ -64,7 +64,7 @@ class Boxes:
 
 		self.outlineList = []
 		for thing in self.shape_list:
-			self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
+			self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, None, [0,1,1,2,2,3,3,0], ('v2f'), ('c4B', (0,120,0,220)*4))
 			self.outlineList.append(self.outline)
 
 		self.fillList = []
@@ -132,7 +132,8 @@ class Boxes:
 			sx = (mouse_pos[0] - self.body.position[0])
 			sy = (mouse_pos[1] - self.body.position[1])
 			spring_pos = Vec2d(sx,sy).rotated(-self.body.angle)
-			self.mouseGrabSpring = pymunk.constraint.DampedSpring(self.mouseBody, self.body, (0,0), (spring_pos), 0, .5, .01)
+			self.mouseGrabSpring = pymunk.constraint.DampedSpring(self.mouseBody, self.body, (0,0), (spring_pos), 10, .5, .01)
+			#self.mouseGrabSpring = pymunk.constraint.PivotJoint(self.mouseBody, self.body, (0,0), (spring_pos))
 			self.space.add(self.mouseGrabSpring)
 			self.mouseGrabbed = True
 	def mouse_grab_drag(self, mouse_coords):

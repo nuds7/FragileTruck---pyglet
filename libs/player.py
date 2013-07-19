@@ -46,7 +46,7 @@ class Circle:
                             )
 
 class Truck:
-    def __init__(self, space, body_position, level_batch, ordered_group_lfg, ordered_group_lfg2, ordered_group_lfg3):
+    def __init__(self, space, body_position, level_batch, debug_batch, ordered_group_lfg, ordered_group_lfg2, ordered_group_lfg3):
         self.space = space
         #self.map_size = map_size
 
@@ -166,6 +166,10 @@ class Truck:
                                                   group=ordered_group_lfg,
                                                   linear_interpolation=True)
 
+        self.band_debug = debug_batch.add(2, pyglet.gl.GL_LINES, ordered_group_lfg3,
+                                          ('v2f'),
+                                          ('c3B', (255,125,255)*2))
+
 
         self.mouseGrabbed = False
         self.grabFirstClick = True
@@ -210,9 +214,9 @@ class Truck:
             self.mouseGrabbed = False
     def update(self):
         if self.mouseGrabbed == True:
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                                ('v2f', ( self.mouseBody.position[0], self.mouseBody.position[1],self.car_body.position[0], self.car_body.position[1])),
-                                ('c3B', (255,125,255)*2))
+            self.band_debug.vertices = (self.mouseBody.position[0], self.mouseBody.position[1],self.car_body.position[0], self.car_body.position[1])
+        else:
+            self.band_debug.vertices = (0,0,0,0)
         
         self.sprite_x = 5*cos(self.car_body.angle-5) + self.car_body.position[0]
         self.sprite_y = 5*sin(self.car_body.angle-5) + self.car_body.position[1]

@@ -1,7 +1,6 @@
 import pyglet
 from pyglet.gl import *
 import pymunk
-import PiTweener
 from math import sqrt,sin,cos,atan2
 from random import uniform
 

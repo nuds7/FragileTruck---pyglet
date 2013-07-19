@@ -329,9 +329,12 @@ class Finish:
             #print(self.sprite.scale)
 
             if self.sprite.opacity != 255:
-                if self.sprite.opacity < 234:
-                    self.sprite.opacity += 15
-                if self.sprite.opacity > 250:
+                if self.sprite.opacity < 250:
+                    self.sprite.opacity += 10
+                if self.sprite.opacity >= 245:
                     self.sprite.opacity = 255
 
             #print(self.sprite.scale)
+
+
+#level_res = ['levels/'+l for l in os.listdir('levels/') if l.endswith('.zip')]

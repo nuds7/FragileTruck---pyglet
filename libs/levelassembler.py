@@ -6,7 +6,6 @@ import configparser
 import zipfile
 import player
 import bridge
-import jelly
 import mobi
 import box
 from box import Boxes
@@ -16,11 +15,13 @@ import trigger
 import particle
 import loaders
 import camera
-import os,sys
+import os,sys,shutil
 from random import randrange,uniform
 from menu import Button
 import math
 from math import sin,cos
+import gametime
+import particles2D
 
 class Menu(object):
 	def __init__(self, 
@@ -58,42 +59,47 @@ class Menu(object):
 		self.space = space
 		self.screen_res = screen_res
 		self.aspect = screen_res[0]/screen_res[1]
-		self.map_zip = zipfile.ZipFile(map_zip)
-		self.map_zip.extractall('resources/temp')
-		pyglet.resource.reindex()
+		self.map_zip = zipfile.ZipFile(map_zip, mode='r')
+		#self.map_zip.extractall('resources/temp')
+		self.map_zip.extract('map_config.cfg', path = 'temp')
+		self.map_zip.extract('map_layout.map', path = 'temp')
 		self.map_zip.close()
-		self.mapConfig = configparser.RawConfigParser()
-		self.mapConfig.read('resources/temp/map_config.cfg')
-		self.mapName = self.mapConfig.get("MapConfig", "Name")
-		self.mapWidth = int(self.mapConfig.get("MapConfig","Width"))
-		self.mapHeight = int(self.mapConfig.get("MapConfig","Height"))
-		self.cameraStartX = int(self.mapConfig.get("MapConfig", "cameraStartX"))
-		self.cameraStartY = int(self.mapConfig.get("MapConfig", "cameraStartY"))
-		#self.lowres = str(self.mapConfig.get("MapConfig", "LowRes"))
+
+		pyglet.resource.path.append(map_zip)
+		pyglet.resource.reindex()
+
+		self.mapConfig 		= configparser.ConfigParser()
+		self.mapConfig.read('temp/map_config.cfg')
+		self.mapName 		= self.mapConfig.get("MapConfig", "Name")
+		self.mapWidth 		= screen_res[0]*3#self.mapConfig.getint("MapConfig","Width")
+		self.mapHeight 		= screen_res[1]#self.mapConfig.getint("MapConfig","Height")
+		self.cameraHomeX 	= screen_res[0]/2
+		self.cameraHomeY 	= screen_res[1]/2
+		#self.lowres 		= str(self.mapConfig.get("MapConfig", "LowRes"))
 		print("Name: "+self.mapName)
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
 		################################ End Map Config
 
 		################################ 
-		self.map_file = open('resources/temp/map_layout.map')
+		self.map_file = open('temp/map_layout.map')
+
 		static_body = pymunk.Body()
 		dirt_body = pymunk.Body()
 
 		self.map_segments = [] # creates a list to hold segments contained in map file
 		self.buttons = []
+		self.sprites = []
 
 		for line in self.map_file:
-			line = line.strip() # refer to http://programarcadegames.com/index.php?chapter=searching
-			#print(line)
-			if line == "": continue # skip blank lines
-			if line.startswith("#"): continue # skip comments
+			line = line.strip()
+
+			if line == "": continue
+			if line.startswith("#"): continue
 
 			#====================================#
-			if line.startswith("pymunk.Segment"): # Add static segments and objects first
-				line = eval(line) # converts string to an object ('segment' -> <segment>)
-				#print(line)
+			if line.startswith("pymunk.Segment"):
+				line = eval(line)
 				line.friction = .5
-				
 				line.group = 2
 				if line.body == dirt_body:
 					line.collision_type = 2
@@ -105,6 +111,14 @@ class Menu(object):
 				line = eval(line)
 				self.buttons.append(line)
 				continue
+			
+			if line.startswith("loaders.spriteloader"):
+				line = eval(line)
+				self.sprites.append(line)
+				continue
+			
+		self.map_file.close()
+
 		self.space.add(self.map_segments)
 		for line in self.map_segments:
 			p1 = line.a # start of seg
@@ -114,7 +128,6 @@ class Menu(object):
 										('c3B/static', (125,10,160,200,20,60)))
 
 		levels = [l for l in os.listdir('levels/') if l.endswith('.zip')]
-		#print(levels)
 		self.level_boxes = []
 		iter_num = 0
 		for level in levels:
@@ -134,33 +147,32 @@ class Menu(object):
 		for box in self.level_boxes:
 			box.setup_pyglet_batch(self.debug_batch, self.level_batch, self.lfg, ordered_group2 = self.lfg2)
 
-		self.background = loaders.spriteloader('menu_bg.png', 
-											  	anchor=(4,4),
-											  	#size = (100,100),
-											  	batch=self.level_batch,
-											  	group=self.bg,
-											  	linear_interpolation=True)
-		self.emitter_L = particle.SimpleEmitter('menu_streamer.png', self.level_batch,  
-                                                #stretch = (80,8), 
-                                                ordered_group = self.lbg,
-                                                #rainbow_mode = True, 
-                                                max_active = 80,
-                                                random_scale = True,
-                                                fade_out = True)
+		pyglet.resource.reindex()
+
+		self.emitter = particles2D.Emitter(pos=(self.screen_res[0]*2/3,self.mapHeight/2), 
+										   max_num = 120)
+		img = pyglet.resource.image('spark.png')
+
+		self.emitter.add_factory(particles2D.spark_machine(580,
+			                                               img,
+			                                               batch=self.level_batch,
+			                                               group=self.pbg),
+														   pre_fill = 60)
+
+		
+		pyglet.resource.path.pop(-1)
+		pyglet.resource.reindex()
 
 		self.level_selected = ''
-		self.cameraPosX = self.cameraStartX
-		self.cameraPosY = self.cameraStartY
 
 	def update(self):
+
 		for box in self.level_boxes:
 			box.draw()
-		for button in self.buttons:
-			if button.do_action and button.action == 'exit':
-				pyglet.app.exit()
-		self.emitter_L.emit(1, (300,360), 
-                                (0,0), [(-1,1),(-1,1)], (-2,2), 180)
-		self.emitter_L.update()
+
+		self.emitter.update()
+		self.emitter.draw()
+
 
 class Level(object):
 	def __init__(self, 
@@ -198,28 +210,29 @@ class Level(object):
 		self.space = space
 		self.screen_res = screen_res
 		self.map_zip = zipfile.ZipFile(map_zip)
-		self.map_zip.extractall('resources/temp')
-		pyglet.resource.reindex()
+
+		self.map_zip.extract('map_config.cfg', path = 'temp')
+		self.map_zip.extract('map_layout.map', path = 'temp')
 		self.map_zip.close()
-		# Read the map's config
-		self.mapConfig          = configparser.RawConfigParser()
-		self.mapConfig.read('resources/temp/map_config.cfg')
+
+		self.mapConfig          = configparser.ConfigParser()
+		self.mapConfig.read('temp/map_config.cfg')
 		self.mapName            = self.mapConfig.get("MapConfig", "Name")
 		self.mapAuthor          = self.mapConfig.get("MapConfig", "Author")
-		self.mapWidth           = int(self.mapConfig.get("MapConfig","Width"))
-		self.mapHeight          = int(self.mapConfig.get("MapConfig","Height"))
+		self.mapWidth           = self.mapConfig.getint("MapConfig","Width")
+		self.mapHeight          = self.mapConfig.getint("MapConfig","Height")
 		self.playerType         = str(self.mapConfig.get("MapConfig", "Player_Type"))
-		self.start_Position_X   = int(self.mapConfig.get("MapConfig", "Player_Start_Position_X"))
-		self.start_Position_Y   = int(self.mapConfig.get("MapConfig", "Player_Start_Position_Y"))
+		self.start_Position_X   = self.mapConfig.getint("MapConfig", "Player_Start_Position_X")
+		self.start_Position_Y   = self.mapConfig.getint("MapConfig", "Player_Start_Position_Y")
 		self.start_Position     = self.start_Position_X,self.start_Position_Y
-		self.lowres             = str(self.mapConfig.get("MapConfig", "LowRes"))
+		self.lowres             = self.mapConfig.get("MapConfig", "LowRes")
 		print("Name: "+self.mapName+"by "+self.mapAuthor)
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
 		print("Player Type: "+self.playerType)
 		print("Starting Position: "+str(self.start_Position_X),str(self.start_Position_Y))
 		print("LowRes: "+str(self.lowres))
 		################################ End Map Config
-		self.map_file = open('resources/temp/map_layout.map')
+		self.map_file = open('temp/map_layout.map')
 		self.screen_res = screen_res
 		self.aspect = screen_res[0]/screen_res[1]
 		static_body = pymunk.Body()
@@ -291,10 +304,12 @@ class Level(object):
 				line = eval(line)
 				self.detectors.append(line)
 				continue
+		self.map_file.close()
+
 		self.space.add(self.map_segments)
 		for line in self.map_segments:
-			p1 = line.a # start of seg
-			p2 = line.b # end of seg
+			p1 = line.a 
+			p2 = line.b 
 			self.stuff = self.debug_batch.add(2, pyglet.gl.GL_LINES, self.lfg,
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
@@ -309,43 +324,59 @@ class Level(object):
 		for line in self.triggers:
 			line.setup_pyglet_batch(self.debug_batch, self.level_batch, self.ui_batch, self.lfg3, screen_res)
 
+		'''
+		Alright, in case if I forget. What I'm about to do is temporarly add 
+		the map's zip file to the resource path and directly load the zip's
+		contained images. That way I do not have to extract everything from 
+		within the zip every time I want to load the map's images. This should
+		not only help with speed, but make everything relatively cleaner. But
+		since each image is within a subdirectory within the zip file, I have
+		to navigate to that directory directly by putting 'images/' before
+		the image. Once I'm done loading all of that, I pop the zip from the
+		resource module's searchable path.
+		'''
+
+		pyglet.resource.path.append(map_zip)
+		pyglet.resource.reindex()
 		if self.lowres == 'True':
-			self.background 		= loaders.spriteloader('bg.png', 
+			self.background 		= loaders.spriteloader('images/bg.png', 
 															anchor=('center','center'),
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.bg,
 															linear_interpolation=True)
-			self.parallax_sprite_1  = loaders.spriteloader('bottom.png', 
+			self.parallax_sprite_1  = loaders.spriteloader('images/bottom.png', 
 															anchor=('center','center'),
 															pos = (0,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg,
 															linear_interpolation=True)
-			self.parallax_sprite_2  = loaders.spriteloader('middle.png', 
+			self.parallax_sprite_2  = loaders.spriteloader('images/middle.png', 
 															anchor=('center','center'),
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg2,
 															linear_interpolation=True)
-			self.parallax_sprite_3  = loaders.spriteloader('clouds.png', 
+			self.parallax_sprite_3  = loaders.spriteloader('images/clouds.png', 
 															anchor=('center','center'),
 															pos = (0,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg3,
 															linear_interpolation=True)
-			self.parallax_sprite_4  = loaders.spriteloader('top.png', 
+			self.parallax_sprite_4  = loaders.spriteloader('images/top.png', 
 															anchor=('center','center'),
 															pos = (0,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg4,
 															linear_interpolation=True)
-			self.level_sprite       = loaders.spriteloader('level.png', 
+			self.level_sprite       = loaders.spriteloader('images/level.png', 
 															anchor=('center','center'),
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.lbg,
 															linear_interpolation=True)
+		pyglet.resource.path.pop(-1)
+		pyglet.resource.reindex()
 
 		self.level_name 		= pyglet.text.Label(text = self.mapName,
 													font_name = 'Calibri', font_size = 8, bold = True,
@@ -362,17 +393,38 @@ class Level(object):
 		self.level_name.set_style('background_color', (255,255,255,80))
 		self.level_author_name.set_style('background_color', (255,255,255,80))
 
+		self.time_ui 	= loaders.spriteloader('time_ui.png', 
+											anchor=(0,0),
+											pos = (5,5),
+											batch=self.ui_batch,
+											group=self.lfg,
+											linear_interpolation=True)
+
 		if self.playerType == 'Truck':
 			self.player = player.Truck(self.space, 
 										self.start_Position, 
 										self.level_batch, 
+										self.debug_batch,
 										self.lfg, 
 										self.lfg2, 
 										self.lfg3)
 		if self.playerType == 'None' or editor_mode == True:
 			self.player = None
 
+		self.time_label = pyglet.text.Label(text = '00:00:00',
+											font_name = 'Calibri', font_size = 11, bold = True,
+											x = 67, y = 5,
+											anchor_x = 'left', anchor_y = 'bottom',
+											color = (255,255,255,255),
+											batch = self.ui_batch,
+											group = self.lfg3)
+
+		self.gt = gametime.GameTime()
+
+
 	def update(self, keys_held, target_pos, camera_pos, angle):
+
+		self.time_label.text = self.gt.tick()
 		if self.player != None:
 			self.player.update()
 			self.player.controls(keys_held)
@@ -395,6 +447,6 @@ class Level(object):
 		self.parallax_sprite_3.x = (camera_pos[0]*.125) 	- (self.mapWidth/2)*.125 	+ self.mapWidth/2
 		self.parallax_sprite_4.x = (camera_pos[0]*.5) 		- (self.mapWidth/2)*.5		+ self.mapWidth/2
 
-		self.parallax_sprite_1.y = (camera_pos[1]*-.1) 		+ (self.mapHeight/2)*.1		+ self.mapHeight/2
-		self.parallax_sprite_3.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1 	+ self.mapHeight/2
-		self.parallax_sprite_4.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1		+ self.mapHeight/2
+		#self.parallax_sprite_1.y = (camera_pos[1]*-.1) 	+ (self.mapHeight/2)*.1		+ self.mapHeight/2
+		#self.parallax_sprite_3.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1 	+ self.mapHeight/2
+		#self.parallax_sprite_4.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1		+ self.mapHeight/2

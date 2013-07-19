@@ -50,7 +50,7 @@ class Camera(object):
 		elif self.target[1] > self.newWeightedScale: 
 			self.newTarget[1] = self.map_size[1] - self.newWeightedScale
 
-		
+		''' # Uncomment to bind zooming to the map size
 		# Keep the scale smaller than the map unless the map is smaller than the screen res
 		if self.map_size[1] > self.screen_size[1]:
 			if self.scale >= self.map_size[1]/2:
@@ -58,7 +58,7 @@ class Camera(object):
 		if self.map_size[0] > self.screen_size[0]:
 			if self.scale*self.aspect >= self.map_size[0]/2:
 				self.scale = (self.map_size[0]/2) / self.aspect
-		
+		'''
 		# Make the camera center the map if the map is smaller than the screen
 		if self.scale * self.aspect >= self.map_size[0]/2:
 			self.newTarget[0] = self.map_size[0]/2
@@ -79,7 +79,7 @@ class Camera(object):
 			-self.newWeightedScale,
 			+self.newWeightedScale)
 
-		self.newAngle = ((self.newAngle*(20-1))+angle) / 20
+		self.newAngle = ((self.newAngle*(10-1))+angle) / 10
 		glRotatef(self.newAngle,0.0,0.0,1.0)
 		gluLookAt(self.newPositionX, self.newPositionY, +1,
 				  self.newPositionX, self.newPositionY, -1,

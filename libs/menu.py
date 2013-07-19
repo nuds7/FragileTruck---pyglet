@@ -5,7 +5,6 @@ from pymunk import Vec2d
 import configparser
 import zipfile
 import bridge
-import jelly
 import mobi
 import box
 from box import Boxes
@@ -17,24 +16,30 @@ import particle
 import loaders
 import glob
 import os
+import shutil
 
 class Button:
-	def __init__(self, position, image, text, glow_image=None, padding=(0,0,0,0), action=None, camera_target=None):
+	def __init__(self, position, image, text, 
+				 hover_image=None, 
+				 padding=(0,0,0,0), 
+				 action='No action.', 
+				 camera_target=None,):
 		#self.padding = padding
 		self.position = position
 		self.text = text
 		self.action = action
-		self.glow_image = glow_image
+		self.hover_image = hover_image
 
 		self.sprite = loaders.spriteloader(image,
 										   anchor = ('center','center'),
 										   pos = position,
 										   linear_interpolation = True)
-		self.glow = loaders.spriteloader(glow_image,
-										 placeholder = 'empty.png',
-										 anchor = ('center','center'),
-										 pos = position,
-										 linear_interpolation = False)
+		self.hover_sprite = loaders.spriteloader(hover_image,
+										 		 placeholder = 'empty.png',
+										 		 anchor = ('center','center'),
+										 		 pos = position,
+										 		 linear_interpolation = False)
+		self.hover_sprite.visible = False
 
 		padding_left = self.sprite.image.width//2 + padding[0]
 		padding_bottom = self.sprite.image.height//2 + padding[1]
@@ -65,7 +70,7 @@ class Button:
 			self.camera_target_y = None
 		self.camera_move = False
 		self.do_action = False
-
+		
 	def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group, ordered_group2, ordered_group3):
 		self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
 		self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
@@ -78,22 +83,23 @@ class Button:
 		self.sprite.batch 	= level_batch
 		self.sprite.group 	= ordered_group
 		
-		self.glow.batch = level_batch
-		self.glow.group = ordered_group3
+		self.hover_sprite.batch = level_batch
+		self.hover_sprite.group = ordered_group2
 		
 		label = pyglet.text.Label(text = self.text,
-								  font_name = 'RobotoRegular',
+								  font_name = 'Roboto',
 								  italic = True,
 								  font_size = 40, 
-								  bold = True,
+								  #bold = True,
 								  width = self.sprite.width,
 								  multiline = True,
 								  align = 'center',
 								  x = self.position[0], y = self.position[1], 
 								  anchor_x = 'center', anchor_y = 'center',
-								  color = (255,255,255,255),
+								  color = (85,85,85,255),
 								  batch = level_batch,
 								  group = ordered_group3)
+		'''=
 		label2 = pyglet.text.Label(text = self.text,
 								  font_name = 'RobotoRegular',
 								  italic = True,
@@ -107,40 +113,53 @@ class Button:
 								  color = (5,5,5,255),
 								  batch = level_batch,
 								  group = ordered_group2)
+		'''
 		if label.content_height > self.sprite.height:
 			label.font_size = self.sprite.height / label.content_height * 38
 		if label.content_width > self.sprite.width:
 			label.font_size = self.sprite.width / label.content_width * 38
-
+		'''
 		if label2.content_height > self.sprite.height:
 			label2.font_size = self.sprite.height / label2.content_height * 39
 		if label2.content_width > self.sprite.width:
 			label2.font_size = self.sprite.width / label2.content_width * 39
-
-	def click(self, mouse_pos, button, camera_pos):
+		'''
+		if self.text == '':
+			self.text = self.action
+	def press(self, mouse_pos, button):
 		self.bb_outline.colors = (self.color*4)
 		if self.bb.contains_vect(mouse_pos):
 			if button == 1:
 				self.bb_outline.colors = (self.color3*4)
-				self.clicked = True
-				print(self.text+" clicked!")
-		if self.clicked:
-			if self.camera_target_x != None and self.camera_target_y != None:
-				self.camera_move = True
-			self.do_action = True
-			self.clicked = False
+				print(self.text+" pressed!")
+
+	def release(self, mouse_pos, button, camera_pos):
+		if self.bb.contains_vect(mouse_pos):
+			if button == 1:
+				self.do_action = True
+				if self.camera_target_x != None and self.camera_target_y != None:
+					self.camera_move = True
+
 		if self.camera_target_x != None and self.camera_target_y != None:
 			if abs(camera_pos[0]-self.camera_target_x) < 500 and \
 			   abs(camera_pos[0]-self.camera_target_x) < 500:
 				self.camera_move = False
+
+		if self.do_action and self.action == 'exit':
+				print('Button action: %s. Purging temp folder and exiting.' % (self.action))
+				shutil.rmtree('temp')
+				pyglet.app.exit()
+				self.do_action = False
 			
 	def hover(self, mouse_pos):
 		self.bb_outline.colors = (self.color*4)
 		if self.bb.contains_vect(mouse_pos):
 			self.bb_outline.colors = (self.color2*4)
-			self.glow.opacity = 255
+			self.sprite.visible = False
+			self.hover_sprite.visible = True
 		elif not self.bb.contains_vect(mouse_pos): 
-			self.glow.opacity = 0
+			self.sprite.visible = True
+			self.hover_sprite.visible = False
 
 '''
 class Game_Menu:
