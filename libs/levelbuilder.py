@@ -46,6 +46,8 @@ class LevelBuilder:
 		###
 		self.clicked_pos = 0,0
 
+		print("Builder started.")
+
 	def write_to_file(self, symbol, modifiers):
 		if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.S:
 			map_file = open("leveleditoroutput.txt", "a")
@@ -80,16 +82,20 @@ class LevelBuilder:
 			self.collectable_points = []
 
 	def undo(self, symbol, modifiers, mode):
+
 		if mode == 'Segment':
 			if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.Z:
+				print("Removing segment...")
 				if len(self.segments_to_add) > 1:
-					print("Removed physical",str(self.segments_to_add.pop()),str(self.segments_to_add.pop()))
+					print("Removed physical",	 str(self.segments_to_add.pop()),str(self.segments_to_add.pop()))
 					print("Removed draw points", str(self.segment_points.pop()),str(self.segment_points.pop()),
-						   str(self.segment_points.pop()),str(self.segment_points.pop()))
+						   						 str(self.segment_points.pop()),str(self.segment_points.pop())
+						   						 )
 					self.guide_line_draw.vertices = [0,0,0,0]
 
 		if mode == 'Collectable':
 			if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.Z:
+				print("Removing collectable...")
 				if len(self.collectables_to_add) > 0:
 					print("Removed collectable at ", str(self.collectables_to_add.pop()))
 					print("Removed collectable draw point", str(self.collectable_points.pop()),str(self.collectable_points.pop()))

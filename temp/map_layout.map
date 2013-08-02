@@ -1,0 +1,8 @@
+#pymunk.Segment(_body, , , 4)
+# Boundries
+pymunk.Segment(static_body, (0,0), (self.mapWidth,0), 4)
+pymunk.Segment(static_body, (0,self.mapHeight), (self.mapWidth,self.mapHeight), 4)
+pymunk.Segment(static_body, (0,0), (0,self.mapHeight), 4)
+pymunk.Segment(static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight), 4)
+# Level
+powerup.PowerUp((500,30), 'wheelp.png', pwr_type='Gravity', duration=240)

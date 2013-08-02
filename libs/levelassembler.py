@@ -5,6 +5,7 @@ from pymunk import Vec2d
 import configparser
 import zipfile
 import player
+import playernew
 import bridge
 import mobi
 import box
@@ -17,11 +18,14 @@ import loaders
 import camera
 import os,sys,shutil
 from random import randrange,uniform
-from menu import Button
+import menu
+from menu import State_Button
 import math
 from math import sin,cos
 import gametime
 import particles2D
+import time
+import powerup
 
 class Menu(object):
 	def __init__(self, 
@@ -71,28 +75,24 @@ class Menu(object):
 		self.mapConfig 		= configparser.ConfigParser()
 		self.mapConfig.read('temp/map_config.cfg')
 		self.mapName 		= self.mapConfig.get("MapConfig", "Name")
-		self.mapWidth 		= screen_res[0]*3#self.mapConfig.getint("MapConfig","Width")
-		self.mapHeight 		= screen_res[1]#self.mapConfig.getint("MapConfig","Height")
+		self.mapWidth 		= screen_res[0]*3
+		self.mapHeight 		= screen_res[1]
 		self.cameraHomeX 	= screen_res[0]/2
 		self.cameraHomeY 	= screen_res[1]/2
-		#self.lowres 		= str(self.mapConfig.get("MapConfig", "LowRes"))
 		print("Name: "+self.mapName)
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
-		################################ End Map Config
+		################################
 
 		################################ 
-		self.map_file = open('temp/map_layout.map')
-
 		static_body = pymunk.Body()
 		dirt_body = pymunk.Body()
-
-		self.map_segments = [] # creates a list to hold segments contained in map file
+		self.map_segments = []
 		self.buttons = []
 		self.sprites = []
 
-		for line in self.map_file:
-			line = line.strip()
+		self.map_file = open('temp/map_layout.map')
 
+		for line in self.map_file:
 			if line == "": continue
 			if line.startswith("#"): continue
 
@@ -111,12 +111,17 @@ class Menu(object):
 				line = eval(line)
 				self.buttons.append(line)
 				continue
+			if line.startswith("State_Button"):
+				#print(line)
+				line = eval(line)
+				line.physical_box(self.space)
+				self.buttons.append(line)
+				continue
 			
 			if line.startswith("loaders.spriteloader"):
 				line = eval(line)
 				self.sprites.append(line)
 				continue
-			
 		self.map_file.close()
 
 		self.space.add(self.map_segments)
@@ -131,15 +136,18 @@ class Menu(object):
 		self.level_boxes = []
 		iter_num = 0
 		for level in levels:
+			pyglet.resource.path.append('levels/'+level)
+			pyglet.resource.reindex()
 			level_box = Boxes(self.space, ((self.mapWidth//2)+uniform(-5,5),self.mapHeight+200+uniform(-5,5)), 
-									(128,128), 0.01, .5, 1, (0,0), 
-									level.replace('.zip', '.png'), 
-									menu_box = True,
-									placeholder = 'preview_placeholder.png', 
-									scale = 1,
-									point_query = True,
-									name = level)
+							  (128,128), 0.01, .5, 1, (0,0), 
+							  'images/preview.png', # level.replace('.zip', '.png'), 
+							  menu_box = True,
+							  placeholder = 'preview_placeholder.png', 
+							  scale = 1,
+							  point_query = True,
+							  name = level)
 			self.level_boxes.append(level_box)
+			pyglet.resource.path.pop(-1)
 			iter_num += 1
 
 		for line in self.buttons:
@@ -150,22 +158,24 @@ class Menu(object):
 		pyglet.resource.reindex()
 
 		self.emitter = particles2D.Emitter(pos=(self.screen_res[0]*2/3,self.mapHeight/2), 
-										   max_num = 120)
+										   max_num = 200)
 		img = pyglet.resource.image('spark.png')
 
 		self.emitter.add_factory(particles2D.spark_machine(580,
 			                                               img,
 			                                               batch=self.level_batch,
-			                                               group=self.pbg),
-														   pre_fill = 60)
+			                                               group=self.bg),
+														   pre_fill = 100)
 
 		
 		pyglet.resource.path.pop(-1)
 		pyglet.resource.reindex()
 
 		self.level_selected = ''
+		
 
 	def update(self):
+		#self.st.update()
 
 		for box in self.level_boxes:
 			box.draw()
@@ -247,6 +257,7 @@ class Level(object):
 		self.collectables = []
 		self.detectors = []
 		self.triggers = []
+		self.powerups = []
 
 		for line in self.map_file:
 			line = line.strip() # refer to http://programarcadegames.com/index.php?chapter=searching
@@ -304,6 +315,11 @@ class Level(object):
 				line = eval(line)
 				self.detectors.append(line)
 				continue
+			if line.startswith("powerup"):
+				#print(line)
+				line = eval(line)
+				self.powerups.append(line)
+				continue
 		self.map_file.close()
 
 		self.space.add(self.map_segments)
@@ -344,37 +360,43 @@ class Level(object):
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.bg,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 			self.parallax_sprite_1  = loaders.spriteloader('images/bottom.png', 
 															anchor=('center','center'),
-															pos = (0,self.mapHeight/2),
+															pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 			self.parallax_sprite_2  = loaders.spriteloader('images/middle.png', 
 															anchor=('center','center'),
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg2,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 			self.parallax_sprite_3  = loaders.spriteloader('images/clouds.png', 
 															anchor=('center','center'),
-															pos = (0,self.mapHeight/2),
+															pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg3,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 			self.parallax_sprite_4  = loaders.spriteloader('images/top.png', 
 															anchor=('center','center'),
-															pos = (0,self.mapHeight/2),
+															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.pbg4,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 			self.level_sprite       = loaders.spriteloader('images/level.png', 
 															anchor=('center','center'),
 															pos = (self.mapWidth/2,self.mapHeight/2),
 															batch=self.level_batch,
 															group=self.lbg,
-															linear_interpolation=True)
+															linear_interpolation=True
+															)
 		pyglet.resource.path.pop(-1)
 		pyglet.resource.reindex()
 
@@ -401,15 +423,20 @@ class Level(object):
 											linear_interpolation=True)
 
 		if self.playerType == 'Truck':
-			self.player = player.Truck(self.space, 
-										self.start_Position, 
+			self.player = playernew.Truck(self.space, 
+										(self.start_Position), 
 										self.level_batch, 
 										self.debug_batch,
+										self.ui_batch,
 										self.lfg, 
 										self.lfg2, 
 										self.lfg3)
 		if self.playerType == 'None' or editor_mode == True:
 			self.player = None
+
+		for line in self.powerups:
+			line.setup_modifiers(self.player, self.space)
+			line.setup_pyglet_batch(self.level_batch, self.ui_batch, self.lfg, self.lfg2, self.screen_res)
 
 		self.time_label = pyglet.text.Label(text = '00:00:00',
 											font_name = 'Calibri', font_size = 11, bold = True,
@@ -420,7 +447,6 @@ class Level(object):
 											group = self.lfg3)
 
 		self.gt = gametime.GameTime()
-
 
 	def update(self, keys_held, target_pos, camera_pos, angle):
 
@@ -442,11 +468,20 @@ class Level(object):
 			line.update(target_pos, index*(line.image.width*.66))
 		for line in self.triggers:
 			line.update(target_pos, angle)
+		for line in self.powerups:
+			line.update(self.player)
 
-		self.parallax_sprite_1.x = (camera_pos[0]*-.125) 	+ (self.mapWidth/2)*.125	+ self.mapWidth/2
-		self.parallax_sprite_3.x = (camera_pos[0]*.125) 	- (self.mapWidth/2)*.125 	+ self.mapWidth/2
-		self.parallax_sprite_4.x = (camera_pos[0]*.5) 		- (self.mapWidth/2)*.5		+ self.mapWidth/2
+		self.parallax_sprite_1.x = (camera_pos[0]*.25) 	 	- (self.mapWidth/2)*.25	+ self.mapWidth/2
+		self.parallax_sprite_2.x = (camera_pos[0]*.125)  	- (self.mapWidth/2)*.125   + self.mapWidth/2
+		
+		#self.parallax_sprite_1.y = (camera_pos[1]*.1)   	- (self.mapHeight/2)*.1  	+ self.mapHeight/2
+		#self.parallax_sprite_2.y = (camera_pos[1]*.05)  	- (self.mapHeight/2)*.05 	+ self.mapHeight/2
 
+		##
+		#self.parallax_sprite_1.x = (camera_pos[0]*-.125) 	+ (self.mapWidth/2)*.125	+ self.mapWidth/2
+		#self.parallax_sprite_3.x = (camera_pos[0]*.125) 	- (self.mapWidth/2)*.125 	+ self.mapWidth/2
+		#self.parallax_sprite_4.x = (camera_pos[0]*.5) 		- (self.mapWidth/2)*.5		+ self.mapWidth/2
+		##
 		#self.parallax_sprite_1.y = (camera_pos[1]*-.1) 	+ (self.mapHeight/2)*.1		+ self.mapHeight/2
 		#self.parallax_sprite_3.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1 	+ self.mapHeight/2
 		#self.parallax_sprite_4.y = (camera_pos[1]*.1) 		- (self.mapHeight/2)*.1		+ self.mapHeight/2

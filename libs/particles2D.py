@@ -4,6 +4,7 @@ import random
 from random import uniform,randrange,choice
 import loaders
 from pymunk import Vec2d
+import pytweener
 
 ## http://stackoverflow.com/questions/14885349/how-to-implement-a-particle-engine
 ## Performance? http://docs.cython.org/src/userguide/tutorial.html
@@ -14,6 +15,12 @@ def omni_spread(speed_x,speed_y):
         particle.x += speed_x
         particle.y += speed_y
     return _omni_spread
+def init_vel(x,y):
+    def _init_vel(particle):
+        particle.x += particle.vel[0]
+        particle.y += particle.vel[1]
+        particle.vel += Vec2d(x,y)
+    return _init_vel
 def gravity(strength_x,strength_y):
     def _gravity(particle):
         particle.x += particle.vel[0]
@@ -25,7 +32,6 @@ def scale(scale):
     def _scale(particle):
         particle.sprite.scale = scale
     return _scale
-
 
 def rotate(speed):
     def _rotate(particle):
@@ -50,6 +56,16 @@ def age_fade_kill():
         if particle.alive < 0:
             particle.kill()
     return _age_fade_kill
+
+def age_scale_fade_kill(rate):
+    def _age_scale_fade_kill(particle):
+        particle.alive -= 1
+        if particle.alive < 13:
+            particle.sprite.opacity -= 15
+            particle.sprite.scale += rate
+        if particle.alive < 0:
+            particle.kill()
+    return _age_scale_fade_kill
 
 def kill_at(max_x,max_y):
     def _kill_at(particle):
@@ -87,22 +103,41 @@ def spark_machine(age,img,batch,group):
         for _ in range(random.choice([0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4])):
             behavior = (
                         omni_spread(uniform(0.4,-0.4),uniform(0.2,-0.2)),
-                        #wind(1,10),
-                        #kill_at(220,120),
-                        #age_kill(),
                         age_fade_kill(),
+                        #scale(uniform(2,5)),
                         #fade_kill_at(260,160),
-                        scale(uniform(.5,2)),
-                        rotate(uniform(0.5,-0.5))
+                        rotate(uniform(0.2,-0.2)),
+                        scale(uniform(2,5))
                         )
             p = Particle(age,img,batch,group,*behavior)
             yield p
     while True:
         yield create()
+def confetti_machine(age,i_vel,img,batch,group):
+    def create():
+        for _ in range(random.choice([0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4])):
+            behavior = (
+                        gravity(0,-0.1),
+                        #age_kill(),
+                        age_fade_kill(),
+                        scale(uniform(.5,1)),
+                        #rotate(uniform(1,-1))
+                        )
+            p = Particle(age,img,batch,group,*behavior)
+            p.vel = (uniform(i_vel[0][0],i_vel[0][1]),
+                     uniform(i_vel[1][0],i_vel[1][1]))
+            #p.sprite.color = (randrange(0,255),
+            #                  randrange(0,255),
+            #                  randrange(0,255),)
+            yield p
+    while True:
+        yield create()
+
 
 class Particle():
     def __init__(self,age,img,batch=None,group=None,*strategies,age_offset=(0,100)):
         self.x,self.y = 0,0
+        self.vel = Vec2d(0,0)
         self.sprite = loaders.image_sprite_loader(img,
                                                   pos = (self.x,self.y),
                                                   anchor = ('center', 'center'),
@@ -110,9 +145,11 @@ class Particle():
                                                   group = group,
                                                   linear_interpolation = True
                                                   )
-        self.age = age
-        self.alive = age + random.randrange(age_offset[0],age_offset[1])
+        self.age = age + random.randrange(age_offset[0],age_offset[1])
+        self.alive = age 
         self.strategies = strategies
+    def set_scale(self, scale):
+        self.sprite.scale = scale
     def kill(self):
         self.alive = -1
     def move(self):

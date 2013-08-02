@@ -2,26 +2,11 @@ import os, sys
 os.putenv('PYGLET_SHADOW_WINDOW', '0')
 import pyglet
 from pyglet.gl import *
-import pymunk
-from pymunk import Vec2d
-import math
-from math import sin,cos,tan,degrees
 lib_path = os.path.abspath('libs/')
 sys.path.append(lib_path)
-import camera
-import player
-import levelassembler
-import box
-import bridge
-import particle
-import box
-import mobi
-import collectable
 import scene
-import loaders
-import shutil
-import particles2D
-from random import randrange,uniform
+import time
+import ui
 pyglet.resource.path = ['resources',
 						'resources/images',
 						'resources/images/tips',
@@ -50,10 +35,10 @@ class Window(pyglet.window.Window):
 										   color = (255,255,255,200),
 										   batch = self.overlay_batch)
 		self.ver_label.set_style('background_color', (0,0,0,80)) 
+		self.overlay_batch.draw()
 
 		self.manager = scene.SceneManager('resources/menu/MAIN_MENU.zip', 
 										 (self.width,self.height))
-
 		self.keys_held = []
 
 	def update(self, dt):
@@ -84,5 +69,5 @@ class Window(pyglet.window.Window):
 		self.manager.scene.on_mouse_motion(x, y, dx, dy, worldMouse)
 	
 if __name__ == '__main__':
-	window = Window(1280, 720, caption = 'FragileTruck', fullscreen = False) # 960, 540
+	window = Window( 1280, 720, caption = 'FragileTruck', fullscreen = False) # 960, 540
 	pyglet.app.run()

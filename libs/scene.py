@@ -24,7 +24,8 @@ import zipfile
 import loaders
 import trigger
 import math
-from menu import Button
+import time
+import ui
 from box import Boxes
 from random import randrange,uniform
 pyglet.resource.path = ['resources',
@@ -99,6 +100,7 @@ class Editor_Scene(Scene):
 		glLineWidth(2)
 		self.screen_res = screen_res
 		self.aspect = screen_res[0]/screen_res[1]
+		
 
 		self.level = levelassembler.Level(map_zip,
 										  self.space,
@@ -116,8 +118,7 @@ class Editor_Scene(Scene):
 										  self.pbg2,
 										  self.pbg,
 										  self.bg,
-										  editor_mode = True
-										  )
+										  editor_mode = True)
 
 		self.cameraPosX = self.level.mapWidth//2
 		self.cameraPosY = self.level.mapHeight//2
@@ -204,8 +205,6 @@ class Editor_Scene(Scene):
 			self.mode = 'Collectable'
 		if symbol == pyglet.window.key._0:
 			self.mode = 'None'
-		self.builder.write_to_file(symbol, modifiers)
-		self.builder.undo(symbol, modifiers, self.mode)
 	def on_key_release(self, symbol, modifiers):
 		pass
 	def on_mouse_press(self, x, y, button, modifiers, world_mouse):
@@ -300,21 +299,27 @@ class Game_Scene(Scene):
 
 		self.camera_zoom = self.screen_res[1]/4
 		self.debug = False
+		self.weighted_cam = Vec2d(0,0)
+
 	def update(self, keys_held):
 		self.space.step(0.015)
 		self.level.update(keys_held, 
-						  self.level.player.car_body.position, 
+						  self.level.player.chassis_body.position, 
 						  (self.camera.newPositionX,self.camera.newPositionY),
-						  self.level.player.car_body.angle)
+						  self.level.player.chassis_body.angle)
 
-		self.camera.update(self.level.player.car_body.position, 
-							(self.camera_zoom), 
-							sin(self.level.player.car_body.angle)*-10, [20,15], 20)
+		self.camera.update(self.level.player.chassis_body.position, 
+						   self.camera_zoom+abs(self.level.player.chassis_body.velocity[0]/20), 
+						   sin(self.level.player.chassis_body.angle)*4, [10,10], 20)
+		
+		vel = Vec2d(self.level.player.chassis_body.velocity)
+		self.camera.edge_bounce(-vel[0]/50,-vel[1]/50,[-self.camera.newPositionX,0])
 
 		glClearColor(1,1,1,1)
 		if not self.debug:
 			self.level_batch.draw()
 		else:
+			self.level_batch.draw()
 			self.debug_batch.draw()
 		self.camera.hud_mode()
 		self.ui_batch.draw()
@@ -388,6 +393,7 @@ class Menu_Scene(Scene):
 		self.screen_res = screen_res
 		self.aspect = screen_res[0]/screen_res[1]
 
+
 		self.menu = levelassembler.Menu(map_zip,
 										self.space,
 										self.screen_res,
@@ -420,15 +426,14 @@ class Menu_Scene(Scene):
 		self.debug = False
 		self.level_selected = ''
 		self.keys_held = []
-
 	def update(self, keys_held):
+
 		self.keys_held = keys_held
 		self.space.step(0.015)
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
 						   self.camera_zoom, 
 						   0, [10,10],20)
 		self.menu.update()
-
 		if pyglet.window.key.E in self.keys_held:
 			self.editor_label.set_style('background_color', (0,0,0,80))
 			self.editor_label.color = (255,25,25,150)
@@ -440,7 +445,9 @@ class Menu_Scene(Scene):
 		if not self.debug: 
 			self.level_batch.draw()
 		if self.debug:
+			self.level_batch.draw()
 			self.debug_batch.draw()
+		
 		self.camera.hud_mode()
 		self.ui_batch.draw()
 
@@ -464,6 +471,7 @@ class Menu_Scene(Scene):
 		if symbol == pyglet.window.key.T:
 			self.camera_zoom = self.screen_res[1]/2
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+		
 		if self.camera.scale < self.menu.mapHeight//2 and \
 					self.camera.scale < (self.menu.mapWidth//2) / self.aspect:
 			if scroll_y < 0:
@@ -471,6 +479,7 @@ class Menu_Scene(Scene):
 		if self.camera.scale > 100:
 			if scroll_y > 0:
 				self.camera_zoom -= 30*abs(scroll_y)
+		
 	def on_mouse_press(self, x, y, button, modifiers, world_mouse):
 		for b in self.menu.buttons:
 			b.press(world_mouse, button)
@@ -512,7 +521,6 @@ class Menu_Scene(Scene):
 			button.hover(world_mouse)
 		for box in self.menu.level_boxes:
 			box.mouse_pos = world_mouse
-
 class SceneManager(object):
 	def __init__(self, 
 				map_zip, 

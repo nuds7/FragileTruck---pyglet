@@ -54,7 +54,11 @@ def spriteloader(image_file,
 		tex = image.get_texture()
 		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
+	else:
+		tex = image.get_texture()
+		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+	
 	return sprite
 
 def image_sprite_loader(image_file, 

@@ -42,11 +42,12 @@ class Boxes:
 		self.sprites = []
 		for i in range(amount):
 			sprite = loaders.spriteloader(image,
-										   placeholder = placeholder,
-										   #size = size,
-										   scale = scale,
-										   anchor = ('center','center'),
-										   linear_interpolation = True)
+										  placeholder = placeholder,
+										  #size = size,
+										  scale = scale,
+										  anchor = ('center','center'),
+										  linear_interpolation = True
+										  )
 			self.sprites.append(sprite)
 		self.point_query = point_query
 		self.mouse_pos = [0,0]

@@ -7,6 +7,7 @@ import levelassembler
 import camera
 from math import sin,cos
 import particle
+import particles2D
 import loaders
 class Hint:
     def __init__(self, position, padding, image):
@@ -225,36 +226,40 @@ class Finish:
         self.sprite.batch = ui_batch
         self.sprite.group = ordered_group
 
-        self.emitter_L = particle.SimpleEmitter('streamer.png', ui_batch,  
-                                                #stretch = (80,8), 
-                                                rainbow_mode = True, 
-                                                max_active = 10,
-                                                random_scale = True,
-                                                fade_out = True
-                                                )
-        self.emitter_R = particle.SimpleEmitter('streamer.png', ui_batch,  
-                                                #stretch = (80,8), 
-                                                rainbow_mode = True, 
-                                                max_active = 10,
-                                                random_scale = True,
-                                                fade_out = True
-                                                )
-
+        self.emitters = []
+        img = pyglet.resource.image('confetti.png')
+        left_emitter    = particles2D.Emitter(pos=(0,0), 
+                                              max_num = 50)
+        left_emitter.add_factory(particles2D.confetti_machine(60,
+                                                              ((1,6),(3,8)),
+                                                              img,
+                                                              batch=ui_batch,
+                                                              group=None),
+                                                              pre_fill = 0)
+        right_emitter   = particles2D.Emitter(pos=(screen_res[0],0), 
+                                              max_num = 50)
+        right_emitter.add_factory(particles2D.confetti_machine(60,
+                                                              ((-1,-6),(3,8)),
+                                                              img,
+                                                              batch=ui_batch,
+                                                              group=None),
+                                                              pre_fill = 0)
+        self.emitters.append(left_emitter)
+        self.emitters.append(right_emitter)
     def update(self, player_pos, angle):
+        if self.particle_emit:
+            for e in self.emitters: 
+                e.update()
+                e.draw()
         #x = 23*cos(angle+math.radians(90)) + player_pos[0]
         #y = 23*sin(angle+math.radians(90)) + player_pos[1]
 
         self.weighted_angle = ((self.weighted_angle*(5-1))+angle) / 5
+        
         #self.sprite.rotation = math.degrees(-self.weighted_angle)
 
-        self.emitter_L.update()
-        self.emitter_R.update()
-
-        if self.particle_emit:
-            self.emitter_L.emit(1, (0, 0), 
-                                (0,-0.4), [(12,3),(5,15)],  (-8,8), 60)
-            self.emitter_R.emit(1, (self.screen_res[0], 0), 
-                                (0,-0.4), [(-12,-3),(5,15)], (-8,8), 60)
+        #self.emitter_L.update()
+        #self.emitter_R.update()
 
         if not self.bb.contains_vect(player_pos):
             #self.particle_emit = False
