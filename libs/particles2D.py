@@ -157,11 +157,12 @@ class Particle():
             s(self)
 
 class Emitter(object):
-    def __init__(self, pos=(0,0), max_num = (1500)):
+    def __init__(self, pos=(0,0), max_num = (1500), *args, **kwargs):
         self.particles = []
         self.pos = pos
         self.factories = []
         self.max_num = max_num
+        self.emit = True
     def add_factory(self,factory,pre_fill=300):
         self.factories.append(factory)
         tmp = []
@@ -172,13 +173,15 @@ class Emitter(object):
                 p.move()
         self.particles.extend(tmp)
     def update(self):
-        for f in self.factories:
-            if len(self.particles) < self.max_num:
-                self.particles.extend(next(f))
-        for p in self.particles[:]:
-            p.move()
-            if p.alive == -1:
-                self.particles.remove(p)
+        if self.emit:
+            for f in self.factories:
+                if len(self.particles) < self.max_num:
+                    self.particles.extend(next(f))
+            for p in self.particles[:]:
+                p.move()
+                if p.alive == -1:
+                    self.particles.remove(p)
     def draw(self):
-        for p in self.particles:
-            p.sprite.x,p.sprite.y = self.pos[0]+p.x,self.pos[1]+p.y
+        if self.emit:
+            for p in self.particles:
+                p.sprite.x,p.sprite.y = self.pos[0]+p.x,self.pos[1]+p.y

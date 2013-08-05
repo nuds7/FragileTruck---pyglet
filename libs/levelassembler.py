@@ -117,7 +117,6 @@ class Menu(object):
 				line.physical_box(self.space)
 				self.buttons.append(line)
 				continue
-			
 			if line.startswith("loaders.spriteloader"):
 				line = eval(line)
 				self.sprites.append(line)

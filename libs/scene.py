@@ -28,6 +28,7 @@ import time
 import ui
 from box import Boxes
 from random import randrange,uniform
+import pyglet_util
 pyglet.resource.path = ['resources',
 						'resources/images', 
 						'resources/images/tips', 
@@ -145,6 +146,7 @@ class Editor_Scene(Scene):
 
 		self.camera_zoom = self.screen_res[1]/4
 		self.debug = False
+
 	def update(self, keys_held):
 		self.space.step(0.015)
 		self.level.update(keys_held, 
@@ -301,7 +303,10 @@ class Game_Scene(Scene):
 		self.debug = False
 		self.weighted_cam = Vec2d(0,0)
 
+		#self.pymunk_debug = pyglet_util.draw(self.space, batch = self.debug_batch)
+
 	def update(self, keys_held):
+
 		self.space.step(0.015)
 		self.level.update(keys_held, 
 						  self.level.player.chassis_body.position, 
@@ -321,6 +326,8 @@ class Game_Scene(Scene):
 		else:
 			self.level_batch.draw()
 			self.debug_batch.draw()
+			pyglet_util.draw(self.space)
+			
 		self.camera.hud_mode()
 		self.ui_batch.draw()
 
@@ -426,6 +433,8 @@ class Menu_Scene(Scene):
 		self.debug = False
 		self.level_selected = ''
 		self.keys_held = []
+
+		self.pymunk_debug = pyglet_util.draw(self.space, batch = self.debug_batch)
 	def update(self, keys_held):
 
 		self.keys_held = keys_held

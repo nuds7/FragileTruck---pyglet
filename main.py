@@ -30,14 +30,14 @@ class Window(pyglet.window.Window):
 		self.overlay_batch = pyglet.graphics.Batch()
 		self.ver_label = pyglet.text.Label(text = 'FragileTruck v0.0.1',
 										   font_name = 'Calibri', font_size = 8, bold = True,
-										   x = self.width, y = self.height, 
+										   x = self.width, y = self.height,
 										   anchor_x = 'right', anchor_y = 'top',
 										   color = (255,255,255,200),
 										   batch = self.overlay_batch)
-		self.ver_label.set_style('background_color', (0,0,0,80)) 
+		self.ver_label.set_style('background_color', (0,0,0,80))
 		self.overlay_batch.draw()
 
-		self.manager = scene.SceneManager('resources/menu/MAIN_MENU.zip', 
+		self.manager = scene.SceneManager('resources/menu/MAIN_MENU.zip',
 										 (self.width,self.height))
 		self.keys_held = []
 

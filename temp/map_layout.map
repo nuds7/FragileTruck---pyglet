@@ -5,4 +5,5 @@ pymunk.Segment(static_body, (0,self.mapHeight), (self.mapWidth,self.mapHeight), 
 pymunk.Segment(static_body, (0,0), (0,self.mapHeight), 4)
 pymunk.Segment(static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight), 4)
 # Level
-powerup.PowerUp((500,30), 'wheelp.png', pwr_type='Gravity', duration=240)
+powerup.PowerUp((500,30), 'grav_pwr.png', bar_blend=(109,207,246), pwr_type='Gravity', grav_mod_dir=(0,0), duration=120, activation_dist=75)
+powerup.PowerUp((1000,30), 'grav_pwr.png', bar_blend=(109,90,206), pwr_type='Gravity', grav_mod_dir=(800,0), duration=240, activation_dist=75)
