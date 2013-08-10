@@ -87,8 +87,8 @@ class Truck(object):
         left_spring   = pymunk.constraint.DampedSpring(self.chassis_body, self.l_wheel_body, (-l_wheel_base, 0),  (0,0), rest_ln, stiff, damp)
         right_spring  = pymunk.constraint.DampedSpring(self.chassis_body, self.r_wheel_body, (r_wheel_base, 0),   (0,0), rest_ln, stiff, damp)
 
-        left_groove    = pymunk.constraint.GrooveJoint(self.chassis_body, self.l_wheel_body, (-l_wheel_base, -5), (-l_wheel_base, -lift),   (0,0))
-        right_groove   = pymunk.constraint.GrooveJoint(self.chassis_body, self.r_wheel_body, (r_wheel_base, -5),  (r_wheel_base, -lift),    (0,0))
+        left_groove    = pymunk.constraint.GrooveJoint(self.chassis_body, self.l_wheel_body, (-l_wheel_base, -12), (-l_wheel_base, -lift),   (0,0))
+        right_groove   = pymunk.constraint.GrooveJoint(self.chassis_body, self.r_wheel_body, (r_wheel_base, -12),  (r_wheel_base, -lift),    (0,0))
 
         space.add(left_spring,left_groove,right_spring,right_groove)
         ##

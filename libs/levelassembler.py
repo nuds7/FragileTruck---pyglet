@@ -215,6 +215,7 @@ class Level(object):
 		self.pbg2 				= pbg2
 		self.pbg 				= pbg
 		self.bg 				= bg
+		self.editor_mode 		= editor_mode
 
 		self.space = space
 		self.screen_res = screen_res
@@ -414,13 +415,6 @@ class Level(object):
 		self.level_name.set_style('background_color', (255,255,255,80))
 		self.level_author_name.set_style('background_color', (255,255,255,80))
 
-		self.time_ui 	= loaders.spriteloader('time_ui.png', 
-											anchor=(0,0),
-											pos = (5,5),
-											batch=self.ui_batch,
-											group=self.lfg,
-											linear_interpolation=True)
-
 		if self.playerType == 'Truck':
 			self.player = playernew.Truck(self.space, 
 										(self.start_Position), 
@@ -435,9 +429,20 @@ class Level(object):
 
 		for line in self.powerups:
 			line.setup_modifiers(self.player, self.space)
-			line.setup_pyglet_batch(self.level_batch, self.ui_batch, self.lfg, self.lfg2, self.screen_res)
+			line.setup_pyglet_batch(self.level_batch, self.ui_batch, 
+									self.lfg, self.lfg2, lfg3, 
+									self.screen_res, 
+									ordered_group_bg=self.lbg)
 
-		self.time_label = pyglet.text.Label(text = '00:00:00',
+		if not editor_mode:
+			self.gt = gametime.GameTime()
+			self.time_ui 	= loaders.spriteloader('time_ui.png', 
+											anchor=(0,0),
+											pos = (5,5),
+											batch=self.ui_batch,
+											group=self.lfg,
+											linear_interpolation=True)
+			self.time_label = pyglet.text.Label(text = '00:00:00',
 											font_name = 'Calibri', font_size = 11, bold = True,
 											x = 67, y = 5,
 											anchor_x = 'left', anchor_y = 'bottom',
@@ -445,11 +450,14 @@ class Level(object):
 											batch = self.ui_batch,
 											group = self.lfg3)
 
-		self.gt = gametime.GameTime()
+		self.powerup_queue = powerup.PowerUpQueue()
+		self.active_powerups = []
 
 	def update(self, keys_held, target_pos, camera_pos, angle):
 
-		self.time_label.text = self.gt.tick()
+		if not self.editor_mode:
+			self.time_label.text = self.gt.tick()
+
 		if self.player != None:
 			self.player.update()
 			self.player.controls(keys_held)
@@ -467,8 +475,19 @@ class Level(object):
 			line.update(target_pos, index*(line.image.width*.66))
 		for line in self.triggers:
 			line.update(target_pos, angle)
+
 		for line in self.powerups:
 			line.update(self.player)
+			if line.do_action and not line.placed_in_queue:
+				line.placed_in_queue=True
+				self.active_powerups.append(line)
+
+		for p in self.active_powerups:
+			if not p.do_action:
+				p.placed_in_queue = False
+				self.active_powerups.remove(p)
+
+		self.powerup_queue.update(self.active_powerups)
 
 		self.parallax_sprite_1.x = (camera_pos[0]*.25) 	 	- (self.mapWidth/2)*.25	+ self.mapWidth/2
 		self.parallax_sprite_2.x = (camera_pos[0]*.125)  	- (self.mapWidth/2)*.125   + self.mapWidth/2

@@ -11,11 +11,11 @@ pyglet.resource.path = ['resources',
 						'resources/images',
 						'resources/images/tips',
 						'resources/menu/images',
-						'levels/previews',
 						'resources/temp',
 						'resources/temp/images',
 						'resources/temp/images/tips']
 pyglet.resource.reindex()
+
 
 class Window(pyglet.window.Window):
 	def __init__(self, *args, **kwargs):
@@ -69,5 +69,5 @@ class Window(pyglet.window.Window):
 		self.manager.scene.on_mouse_motion(x, y, dx, dy, worldMouse)
 	
 if __name__ == '__main__':
-	window = Window( 1280, 720, caption = 'FragileTruck', fullscreen = False) # 960, 540
+	window = Window(1280, 720, caption = 'FragileTruck', fullscreen = False) # 960, 540
 	pyglet.app.run()

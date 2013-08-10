@@ -314,7 +314,7 @@ class Game_Scene(Scene):
 						  self.level.player.chassis_body.angle)
 
 		self.camera.update(self.level.player.chassis_body.position, 
-						   self.camera_zoom+abs(self.level.player.chassis_body.velocity[0]/20), 
+						   self.camera_zoom+abs(self.level.player.chassis_body.velocity[0]/10), 
 						   sin(self.level.player.chassis_body.angle)*4, [10,10], 20)
 		
 		vel = Vec2d(self.level.player.chassis_body.velocity)
@@ -433,8 +433,6 @@ class Menu_Scene(Scene):
 		self.debug = False
 		self.level_selected = ''
 		self.keys_held = []
-
-		self.pymunk_debug = pyglet_util.draw(self.space, batch = self.debug_batch)
 	def update(self, keys_held):
 
 		self.keys_held = keys_held
@@ -455,6 +453,7 @@ class Menu_Scene(Scene):
 			self.level_batch.draw()
 		if self.debug:
 			self.level_batch.draw()
+			pyglet_util.draw(self.space)
 			self.debug_batch.draw()
 		
 		self.camera.hud_mode()
