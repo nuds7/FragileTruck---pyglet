@@ -1,12 +1,22 @@
 #pymunk.Segment(_body, , , 4)
 # Boundries
 pymunk.Segment(static_body, (0,0), (self.mapWidth,0), 4)
-pymunk.Segment(static_body, (0,self.mapHeight), (self.mapWidth,self.mapHeight), 4)
-pymunk.Segment(static_body, (0,0), (0,self.mapHeight), 4)
-pymunk.Segment(static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight), 4)
-# Level
-#powerup.PowerUp((500,30), 	'grav_pwr.png', rot_pwr_img=True, 	blend_img=(109,207,109), 	blend_bar=(109,207,109), 	pwr_type='Gravity', grav_mod_dir=(0,0), dur=240, activ_dist=60)
-powerup.PowerUp((1000,30), 	'grav_pwr.png', rot_pwr_img=True, 	blend_img=(109,207,246), 	blend_bar=(109,207,246), 	pwr_type='Gravity', grav_mod_dir=(0,-200), dur=220, activ_dist=60)
-powerup.PowerUp((800,30), 	'grav_pwr.png', rot_pwr_img=True, 	blend_img=(109,207,109), 	blend_bar=(109,207,109), 	pwr_type='Gravity', grav_mod_dir=(0,-200), dur=220, activ_dist=60)
-powerup.PowerUp((600,30), 	'grav_pwr.png', rot_pwr_img=True, 	blend_img=(255,242,0  ), 	blend_bar=(255,242,0  ), 	pwr_type='Gravity', grav_mod_dir=(0,-200), dur=220, activ_dist=60)
-powerup.PowerUp((200,30), 	'boost_pwr.png', 					blend_img=(255,69, 69), 	blend_bar=(255,69, 69), 	pwr_type='Boost',   accel_mod_amount=16, dur=640, activ_dist=75)
+pymunk.Segment(static_body, (0,self.mapHeight+300), (self.mapWidth,self.mapHeight+300), 4)
+pymunk.Segment(static_body, (0,0), (0,self.mapHeight+300), 4)
+pymunk.Segment(static_body, (self.mapWidth,0), (self.mapWidth,self.mapHeight+300), 4)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Button(((self.screen_res[0]/4) - 25, (self.mapHeight//2) + 56), 'play.png', '', hover_image='play_hover.png', action = 'play', camera_target = (screen_res[0]+screen_res[0]//2,screen_res[1]))
+
+State_Button(((self.screen_res[0]/4) - 25, (self.mapHeight//2) + 54), 	'play.png', 	action = 'play', 	padding=(-3,-3,-3,0), camera_target = (screen_res[0]+screen_res[0]//2,screen_res[1]))
+State_Button(((self.screen_res[0]/4) - 25, (self.mapHeight//2)), 		'options.png', 	action = 'options', padding=(-3,-3,-3,0), camera_target = ((screen_res[0]*2)+screen_res[0]//2,screen_res[1]))
+State_Button(((self.screen_res[0]/4) - 25, (self.mapHeight//2) - 54), 	'exit.png', 	action = 'exit', 	padding=(-3,-3,-3,0))
+
+State_Button((screen_res[0] + 70, 26), 		'back.png', camera_target = (self.cameraHomeX,self.cameraHomeY), physical=True, physical_padding=(0,-4))
+State_Button(((screen_res[0]*2) + 70, 26), 	'back.png', camera_target = (self.cameraHomeX,self.cameraHomeY), physical=True, physical_padding=(0,-4))
+
+pymunk.Segment(static_body, (screen_res[0],0), 			(screen_res[0],self.mapHeight+300), 	4)
+
+pymunk.Segment(static_body, (screen_res[0]*2,0), 		(screen_res[0]*2,self.mapHeight+300), 	4)
+
+loaders.spriteloader('images/logo.png', anchor=('center','center'), pos=(self.screen_res[0]*2/3,self.mapHeight/2 - 10), batch=self.level_batch, group=self.lfg3, linear_interpolation=True)
+loaders.spriteloader('images/button_border.png', anchor=('center','center'), pos=((self.screen_res[0]/4) - 25, (self.mapHeight//2)), batch=self.level_batch, group=self.bg, linear_interpolation=True)

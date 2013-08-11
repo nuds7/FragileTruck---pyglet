@@ -36,7 +36,7 @@ class PowerUp(object):
 				 dur=0,
 				 activ_dist=75,
 				 *args,**kwargs):
-
+		self.rot_pwr_img 		 = rot_pwr_img
 		self.bar_blend 			 = blend_bar
 		self.position 			 = position
 		self.pwr_type			 = pwr_type
@@ -58,6 +58,8 @@ class PowerUp(object):
 		if rot_pwr_img:
 			self.sprite.rotation = -Vec2d(grav_mod_dir).get_angle_degrees()+90
 
+		self.sprite_grav_rotation = -Vec2d(grav_mod_dir).get_angle_degrees()+90
+
 		self.collected = False
 		self.do_action = False
 		self.action_done = True
@@ -66,6 +68,7 @@ class PowerUp(object):
 
 		self.sprite_opacity = 255
 		self.sprite_scale = .5
+		self.sprite_rotation = self.sprite_grav_rotation
 
 		self.placed_in_queue = False
 		self.modded = False
@@ -279,8 +282,8 @@ class PowerUp(object):
 									 on_complete_function 	= self.tween_complete)
 					self.scale_tweener.add_tween(self,
 									 sprite_opacity 		= 0,
-									 tween_time 			= 1.25,
-									 tween_type 			= self.scale_tweener.OUT_QUAD,
+									 tween_time 			= 1.5,
+									 tween_type 			= self.scale_tweener.IN_OUT_QUART,
 									 on_update_function 	= self.tween_update,
 									 on_complete_function 	= self.tween_complete)
 					self.tween_added = True
@@ -288,24 +291,33 @@ class PowerUp(object):
 			if not self.collected:
 				if self.tween_added:
 					self.sprite_scale = .001
+					self.sprite_rotation = 0
 					self.scale_tweener.add_tween(self,
-									 sprite_scale 			= 0.5,
-									 tween_time 			= 3.0,
-									 tween_type 			= self.scale_tweener.OUT_ELASTIC,
-									 on_update_function 	= self.tween_update,
-									 on_complete_function 	= self.tween_complete)
+									 			 sprite_scale 			= 0.5,
+									 			 tween_time 			= 3,
+									 			 tween_type 			= self.scale_tweener.OUT_ELASTIC,
+									 			 on_update_function 	= self.tween_update,
+									 			 on_complete_function 	= self.tween_complete)
 					self.scale_tweener.add_tween(self,
-									 sprite_opacity 		= 255,
-									 tween_time 			= 1.75,
-									 tween_type 			= self.scale_tweener.OUT_QUAD,
-									 on_update_function 	= self.tween_update,
-									 on_complete_function 	= self.tween_complete)
+												 sprite_rotation 		= self.sprite_grav_rotation,
+												 tween_time 			= 3,
+												 tween_type 			= self.scale_tweener.OUT_ELASTIC,
+												 on_update_function 	= self.tween_update,
+												 on_complete_function 	= self.tween_complete)
+					self.scale_tweener.add_tween(self,
+												 sprite_opacity 		= 255,
+												 tween_time 			= .5,
+												 tween_type 			= self.scale_tweener.IN_OUT_QUART,
+												 on_update_function 	= self.tween_update,
+												 on_complete_function 	= self.tween_complete)
 					self.tween_added = False
 				
 
 			self.scale_tweener.update()
 			self.sprite.scale 	= self.sprite_scale
 			self.sprite.opacity = self.sprite_opacity
+			if self.rot_pwr_img:
+				self.sprite.rotation = self.sprite_rotation
 
 	def tween_update(self):
 		pass
