@@ -41,12 +41,22 @@ class Window(pyglet.window.Window):
 										 (self.width,self.height))
 		self.keys_held = []
 
+		self.fps_display = pyglet.window.FPSDisplay(self)
+		self.fps_display.label.x, self.fps_display.label.y = self.width, self.height-13
+		self.fps_display.label.anchor_x, self.fps_display.label.anchor_y = 'right', 'top'
+		self.fps_display.label.font_name = 'Calibri'
+		self.fps_display.label.font_size = 8
+		self.fps_display.label.bold = True
+		self.fps_display.label.color = (5,245,120,255)
+		self.fps_display.label.set_style('background_color', (0,0,0,80))
+
 	def update(self, dt):
 		pass
 	def on_draw(self):
 		self.clear()
 		self.manager.scene.update(self.keys_held)
 		self.overlay_batch.draw()
+		self.fps_display.draw()
 	def on_key_press(self, symbol, modifiers):
 		self.keys_held.append(symbol)
 		self.manager.scene.on_key_press(symbol, modifiers)
@@ -69,5 +79,5 @@ class Window(pyglet.window.Window):
 		self.manager.scene.on_mouse_motion(x, y, dx, dy, worldMouse)
 	
 if __name__ == '__main__':
-	window = Window(1280, 720, caption = 'FragileTruck', fullscreen = False) # 960, 540
+	window = Window(960, 540, caption = 'FragileTruck', fullscreen = False) # 960, 540
 	pyglet.app.run()

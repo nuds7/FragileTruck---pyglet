@@ -133,6 +133,23 @@ def confetti_machine(age,i_vel,img,batch,group):
     while True:
         yield create()
 
+def squirt(age,i_vel,img,batch,group,emit=True):
+    def create():
+        for _ in range(random.choice([0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4])):
+            behavior = (
+                        gravity(0,-0.1),
+                        #age_kill(),
+                        age_fade_kill(),
+                        scale(uniform(.5,1)),
+                        #rotate(uniform(1,-1))
+                        )
+            p = Particle(age,img,batch,group,*behavior)
+            p.vel = (uniform(i_vel[0][0],i_vel[0][1]),
+                     uniform(i_vel[1][0],i_vel[1][1]))
+            yield p
+    while emit:
+        yield create()
+
 
 class Particle():
     def __init__(self,age,img,batch=None,group=None,*strategies,age_offset=(0,100)):

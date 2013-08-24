@@ -99,35 +99,35 @@ class Truck(object):
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg2,
-                                                 #linear_interpolation=True
+                                                 linear_interpolation=True
                                                  )
         self.l_wheel_sprite = loaders.spriteloader('wheel.png', 
                                                   anchor=('center','center'),
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=lfg3,
-                                                  #linear_interpolation=True
+                                                  linear_interpolation=True
                                                   )
         self.r_wheel_sprite = loaders.spriteloader('wheel.png', 
                                                   anchor=('center','center'),
                                                   scale = .5,
                                                   batch=level_batch,
                                                   group=lfg3,
-                                                  #linear_interpolation=True
+                                                  linear_interpolation=True
                                                   )
         self.l_sus_sprite = loaders.spriteloader('suspension.png', 
                                                  anchor=('center',9),
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg,
-                                                 #linear_interpolation=True
+                                                 linear_interpolation=True
                                                  )
         self.r_sus_sprite = loaders.spriteloader('suspension.png', 
                                                  anchor=('center',9),
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg,
-                                                 #linear_interpolation=True
+                                                 linear_interpolation=True
                                                  )
         ##
         self.accel_amount       = 4

@@ -9,6 +9,8 @@ from math import sin,cos
 import particle
 import particles2D
 import loaders
+import PiTweener
+
 class Hint:
     def __init__(self, position, padding, image):
         self.position = position
@@ -183,12 +185,7 @@ class Finish:
         self.color = (200,0,0,alpha)
         self.color2 = (0,200,0,alpha)
         self.color3 = (200,200,0,alpha)
-        '''
-        image = levelassembler.imageloader(image, 'placeholder.png', (10,10), stretch = (110,22))
-        tex = image.get_texture()
-        glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        '''
+        
         self.sprite = loaders.spriteloader(image,
                                            anchor               = ('center', 'center'),
                                            #anchor_offset        = (0,-50)
@@ -197,18 +194,11 @@ class Finish:
                                            )
         self.sprite.opacity = 0
 
-        self.start_anim = False
-        self.stage1 = True
-        self.stage2 = False
-        self.stage3 = False
-        self.stage4 = False
-        self.stage5 = False
-        self.stage6 = False
-        self.finished = False
         self.particle_emit = False
 
         self.fangle = 0
         self.weighted_angle = 0
+        self.tweener = PiTweener.Tweener()
 
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ui_batch, ordered_group, screen_res):
@@ -246,6 +236,10 @@ class Finish:
                                                               pre_fill = 0)
         self.emitters.append(left_emitter)
         self.emitters.append(right_emitter)
+
+        self.sprite_scale = .5
+        self.sprite_opacity = 0
+        self.added_tween = False
     def update(self, player_pos, angle):
         if self.particle_emit:
             for e in self.emitters: 
@@ -254,7 +248,7 @@ class Finish:
         #x = 23*cos(angle+math.radians(90)) + player_pos[0]
         #y = 23*sin(angle+math.radians(90)) + player_pos[1]
 
-        self.weighted_angle = ((self.weighted_angle*(5-1))+angle) / 5
+        #self.weighted_angle = ((self.weighted_angle*(5-1))+angle) / 5
         
         #self.sprite.rotation = math.degrees(-self.weighted_angle)
 
@@ -262,82 +256,30 @@ class Finish:
         #self.emitter_R.update()
 
         if not self.bb.contains_vect(player_pos):
-            #self.particle_emit = False
             self.bb_outline.colors = (self.color*4)
-        #    if self.sprite.opacity != 0 or self.sprite.opacity >= 1:
-        #        if self.sprite.opacity > 41:
-        #            self.sprite.opacity -= 20
-        #        if self.sprite.opacity < 41:
-        #            self.sprite.opacity -= 5
-        #        if self.sprite.opacity > 50:
-        #            self.sprite.scale -= 0.02
-        #        self.fangle += 0.05
-        #        self.sprite.rotation = math.degrees(self.fangle-self.weighted_angle)
-        #    self.stage1 = True
-        #    self.stage2 = False
-        #    self.stage3 = False
-        #    self.stage4 = False
-        #    self.stage5 = False
-        #    self.stage6 = False
-        #
-        #    self.particle_flip = False
+
+        self.tweener.update()
 
         if self.bb.contains_vect(player_pos):
             self.particle_emit = True
-            self.finished = True
             #self.fangle = 0
             self.bb_outline.colors = (self.color2*4)
             #self.sprite.rotation = math.degrees(0)
-            self.start_anim = True
+            if not self.added_tween:
+                self.added_tweens = True
+                self.tweener.add_tween(self,
+                                       sprite_scale          = 1,
+                                       sprite_opacity        = 255,
+                                       tween_time            = 1,
+                                       tween_type            = self.tweener.OUT_CUBIC,
+                                       #on_update_function   =
+                                       #on_complete_function =
+                                       )
 
-        if self.start_anim:
-            #self.sprite.rotation = math.degrees(-self.weighted_angle)
-            if self.stage1:
-                if self.sprite.opacity > 1:
-                    self.sprite.scale += 0.04
-                if self.sprite.scale > 1:
-                    self.stage1 = False
-                    self.stage2 = True
-            if self.stage2:
-                if self.sprite.scale > 1:
-                    self.sprite.scale += 0.04
-                if self.sprite.scale > 1.25:
-                    self.stage2 = False
-                    self.stage3 = True
-            if self.stage3:
-                if self.sprite.scale != 1:
-                    if self.sprite.scale > 1:
-                        self.sprite.scale -= 0.04
-                    if self.sprite.scale < 1:
-                        self.sprite.scale += 0.04
-                    if self.sprite.scale == 1 or self.sprite.scale >= 1.0001:
-                        self.stage3 = False
-                        self.stage4 = True
-            if self.stage4:
-                if self.sprite.scale >= .88:
-                    self.sprite.scale -= 0.03
-                if self.sprite.scale < .88:
-                    self.stage4 = False
-                    self.stage5 = True
-            if self.stage5:
-                if self.sprite.scale != 1:
-                    if self.sprite.scale > 1:
-                        self.sprite.scale -= 0.02
-                    if self.sprite.scale < 1:
-                        self.sprite.scale += 0.02
-                    if self.sprite.scale == 1 or self.sprite.scale >= 1.0001:
-                        self.stage5 = False
-                        self.stage6 = True
-            if self.stage6:
-                self.sprite.scale = 1
-                self.stage6 = False
-            #print(self.sprite.scale)
+        self.sprite.scale = self.sprite_scale
+        self.sprite.opacity = self.sprite_opacity
 
-            if self.sprite.opacity != 255:
-                if self.sprite.opacity < 250:
-                    self.sprite.opacity += 10
-                if self.sprite.opacity >= 245:
-                    self.sprite.opacity = 255
+        
 
             #print(self.sprite.scale)
 

@@ -125,6 +125,37 @@ class TweenerEquations(object):
         return (a * 2. ** (-10. * t) * math.sin((t * d - s) * (2. * math.pi)
                                                 / p) + c + b)
 
+    ## Adapted from
+    # https://github.com/EmmanuelOga/easing/blob/master/lib/easing.lua
+    ##
+    def OUT_BOUNCE(self, t, b, c, d):
+        t = t / d
+        if t < 1 / 2.75:
+            return c * (7.5625 * t * t) + b
+        elif t < 2 / 2.75:
+            t = t - (1.5 / 2.75)
+            return c * (7.5625 * t * t + 0.75) + b
+        elif t < 2.5 / 2.75:
+            t = t - (2.25 / 2.75)
+            return c * (7.5625 * t * t + 0.9375) + b
+        else:
+            t = t - (2.625 / 2.75)
+            return c * (7.5625 * t * t + 0.984375) + b
+
+    def IN_BOUNCE(self, t, b, c, d):
+        return c - self.OUT_BOUNCE(d - t, 0, c, d) + b
+    def IN_OUT_BOUNCE(self, t, b, c, d):
+        if t < d / 2:
+            return self.IN_BOUNCE(t * 2, 0, c, d) * 0.5 + b
+        else:
+            return self.OUT_BOUNCE(t * 2 - d, 0, c, d) * 0.5 + c * .5 + b
+    def OUT_IN_BOUNCE(self, t, b, c, d):
+        if t < d / 2:
+            return self.OUT_BOUNCE(t * 2, b, c / 2, d)
+        else:
+            return self.IN_BOUNCE((t * 2) - d, b + c / 2, c / 2, d)
+
+
 class Tweener(TweenerEquations):
     """This class manages all active tweens, and provides a factory for
         creating and spawning tween motions.

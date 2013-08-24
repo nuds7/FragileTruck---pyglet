@@ -80,15 +80,18 @@ class Editor_Scene(Scene):
 		self.background_batch 	= pyglet.graphics.Batch()
 		self.level_batch 		= pyglet.graphics.Batch()
 		self.ui_batch 			= pyglet.graphics.Batch()
-		self.lfg3 				= pyglet.graphics.OrderedGroup(18)
-		self.lfg2 				= pyglet.graphics.OrderedGroup(16)
-		self.lfg 				= pyglet.graphics.OrderedGroup(14)
-		self.lbg 				= pyglet.graphics.OrderedGroup(12)
-		self.pbg4				= pyglet.graphics.OrderedGroup(10)
-		self.pbg3				= pyglet.graphics.OrderedGroup(8)
-		self.pbg2 				= pyglet.graphics.OrderedGroup(6)
-		self.pbg 				= pyglet.graphics.OrderedGroup(4)
-		self.bg 				= pyglet.graphics.OrderedGroup(2)
+		common_group 			= pyglet.graphics.OrderedGroup(1) 
+		# the common_group parent keeps groups from 
+		# overlapping on accident
+		self.lfg3 				= pyglet.graphics.OrderedGroup(18, parent=common_group)
+		self.lfg2 				= pyglet.graphics.OrderedGroup(16, parent=common_group)
+		self.lfg 				= pyglet.graphics.OrderedGroup(14, parent=common_group)
+		self.lbg 				= pyglet.graphics.OrderedGroup(12, parent=common_group)
+		self.pbg4				= pyglet.graphics.OrderedGroup(10, parent=common_group)
+		self.pbg3				= pyglet.graphics.OrderedGroup(8, parent=common_group)
+		self.pbg2 				= pyglet.graphics.OrderedGroup(6, parent=common_group)
+		self.pbg 				= pyglet.graphics.OrderedGroup(4, parent=common_group)
+		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
 		self.space.enablne_contact_graph 	= True
@@ -152,6 +155,7 @@ class Editor_Scene(Scene):
 		self.level.update(keys_held, 
 						  (self.camera.newPositionX,self.camera.newPositionY), 
 						  (self.camera.newPositionX,self.camera.newPositionY),
+						  self.camera.scale,
 						  0)
 
 		self.camera.update((self.cameraPosX,self.cameraPosY), 
@@ -219,10 +223,10 @@ class Editor_Scene(Scene):
 			print(self.builder.clicked_pos)
 	def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers, world_mouse):
 		# Free Camera
-		self.cameraPos = self.camera.edge_bounce(dx,dy,[self.cameraPosX,self.cameraPosY])
-		self.cameraPosX = self.cameraPos[0]
-		self.cameraPosY = self.cameraPos[1]
 		if buttons == 4 or buttons == 5:
+			self.cameraPos = self.camera.edge_bounce(dx,dy,[self.cameraPosX,self.cameraPosY])
+			self.cameraPosX = self.cameraPos[0]
+			self.cameraPosY = self.cameraPos[1]
 			self.cameraPosX -= dx*((self.camera.newWeightedScale*self.aspect)/(self.screen_res[0]/2))
 			self.cameraPosY -= dy*((self.camera.newWeightedScale)/(self.screen_res[1]/2))
 		if self.mode == 'Segment':
@@ -255,15 +259,19 @@ class Game_Scene(Scene):
 		self.background_batch 	= pyglet.graphics.Batch()
 		self.level_batch 		= pyglet.graphics.Batch()
 		self.ui_batch 			= pyglet.graphics.Batch()
-		self.lfg3 				= pyglet.graphics.OrderedGroup(18)
-		self.lfg2 				= pyglet.graphics.OrderedGroup(16)
-		self.lfg 				= pyglet.graphics.OrderedGroup(14)
-		self.lbg 				= pyglet.graphics.OrderedGroup(12)
-		self.pbg4				= pyglet.graphics.OrderedGroup(10)
-		self.pbg3				= pyglet.graphics.OrderedGroup(8)
-		self.pbg2 				= pyglet.graphics.OrderedGroup(6)
-		self.pbg 				= pyglet.graphics.OrderedGroup(4)
-		self.bg 				= pyglet.graphics.OrderedGroup(2)
+
+		common_group 			= pyglet.graphics.OrderedGroup(1) 
+		# the common_group parent keeps groups from 
+		# overlapping on accident
+		self.lfg3 				= pyglet.graphics.OrderedGroup(18, parent=common_group)
+		self.lfg2 				= pyglet.graphics.OrderedGroup(16, parent=common_group)
+		self.lfg 				= pyglet.graphics.OrderedGroup(14, parent=common_group)
+		self.lbg 				= pyglet.graphics.OrderedGroup(12, parent=common_group)
+		self.pbg4				= pyglet.graphics.OrderedGroup(10, parent=common_group)
+		self.pbg3				= pyglet.graphics.OrderedGroup(8, parent=common_group)
+		self.pbg2 				= pyglet.graphics.OrderedGroup(6, parent=common_group)
+		self.pbg 				= pyglet.graphics.OrderedGroup(4, parent=common_group)
+		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
 		self.space.enablne_contact_graph 	= True
@@ -307,18 +315,20 @@ class Game_Scene(Scene):
 
 	def update(self, keys_held):
 
-		self.space.step(0.015)
+		self.space.step(self.level.space_step_rate)
 		self.level.update(keys_held, 
 						  self.level.player.chassis_body.position, 
 						  (self.camera.newPositionX,self.camera.newPositionY),
+						  self.camera.scale,
 						  self.level.player.chassis_body.angle)
 
 		self.camera.update(self.level.player.chassis_body.position, 
-						   self.camera_zoom+abs(self.level.player.chassis_body.velocity[0]/10), 
-						   sin(self.level.player.chassis_body.angle)*4, [10,10], 20)
+						   self.camera_zoom, #+abs(self.level.player.chassis_body.velocity[0]/10), 
+						   0, #sin(self.level.player.chassis_body.angle)*4, 
+						   [30,20], 20)
 		
 		vel = Vec2d(self.level.player.chassis_body.velocity)
-		self.camera.edge_bounce(-vel[0]/50,-vel[1]/50,[-self.camera.newPositionX,0])
+		self.camera.edge_bounce(-vel[0]/50,-vel[1]/50,[-self.camera.newPositionX,-self.camera.newPositionY])
 
 		glClearColor(1,1,1,1)
 		if not self.debug:
@@ -384,15 +394,18 @@ class Menu_Scene(Scene):
 		self.background_batch 	= pyglet.graphics.Batch()
 		self.level_batch 		= pyglet.graphics.Batch()
 		self.ui_batch 			= pyglet.graphics.Batch()
-		self.lfg3 				= pyglet.graphics.OrderedGroup(18)
-		self.lfg2 				= pyglet.graphics.OrderedGroup(16)
-		self.lfg 				= pyglet.graphics.OrderedGroup(14)
-		self.lbg 				= pyglet.graphics.OrderedGroup(12)
-		self.pbg4				= pyglet.graphics.OrderedGroup(10)
-		self.pbg3				= pyglet.graphics.OrderedGroup(8)
-		self.pbg2 				= pyglet.graphics.OrderedGroup(6)
-		self.pbg 				= pyglet.graphics.OrderedGroup(4)
-		self.bg 				= pyglet.graphics.OrderedGroup(2)
+		common_group 			= pyglet.graphics.OrderedGroup(1) 
+		# the common_group parent keeps groups from 
+		# overlapping on accident
+		self.lfg3 				= pyglet.graphics.OrderedGroup(18, parent=common_group)
+		self.lfg2 				= pyglet.graphics.OrderedGroup(16, parent=common_group)
+		self.lfg 				= pyglet.graphics.OrderedGroup(14, parent=common_group)
+		self.lbg 				= pyglet.graphics.OrderedGroup(12, parent=common_group)
+		self.pbg4				= pyglet.graphics.OrderedGroup(10, parent=common_group)
+		self.pbg3				= pyglet.graphics.OrderedGroup(8, parent=common_group)
+		self.pbg2 				= pyglet.graphics.OrderedGroup(6, parent=common_group)
+		self.pbg 				= pyglet.graphics.OrderedGroup(4, parent=common_group)
+		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
 		self.space.enablne_contact_graph 	= True

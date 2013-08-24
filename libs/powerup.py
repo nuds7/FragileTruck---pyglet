@@ -7,6 +7,7 @@ from random import uniform
 import loaders
 import copy
 import PiTweener
+import particles2D
 
 class GroupWithMask(pyglet.graphics.Group):
 	def __init__(self, x, y, width, height, parent=None):
@@ -33,6 +34,7 @@ class PowerUp(object):
 				 pwr_type='None', 
 				 grav_mod_dir=(0,-800), grav_fin_dir=(0,-800), 
 				 accel_mod_amount=4, accel_fin_amount=4,
+				 space_step_mod=.015, space_step_fin=.015,
 				 dur=0,
 				 activ_dist=75,
 				 *args,**kwargs):
@@ -44,16 +46,27 @@ class PowerUp(object):
 		self.grav_finish_dir 	 = grav_fin_dir
 		self.accel_mod_amount 	 = accel_mod_amount
 		self.accel_finish_amount = accel_fin_amount
-		self.duration 			 = dur
+
+		self.space_step_mod 	 = space_step_mod
+		self.space_step_fin 	 = space_step_fin
+
 		self.activation_dist 	 = activ_dist
 
+		self.duration = dur
+
 		self.orig_dur = self.duration
+
+		self.space_step_rate = self.space_step_mod
 
 		self.sprite = loaders.spriteloader(image_file, 
 										   pos 					= position,
 										   anchor 				= ('center','center'),
 										   scale 				= .5,
-										   linear_interpolation = False)
+										   linear_interpolation = True)
+		tex = self.sprite.image.get_texture()
+		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
 		self.sprite.color = blend_img
 		if rot_pwr_img:
 			self.sprite.rotation = -Vec2d(grav_mod_dir).get_angle_degrees()+90
@@ -72,10 +85,13 @@ class PowerUp(object):
 
 		self.placed_in_queue = False
 		self.modded = False
-		
+
+		self.sprite_color_r,self.sprite_color_g,self.sprite_color_b = 255,255,255
 
 		self.scale_tweener = PiTweener.Tweener()
 		self.tween_added = False
+		self.duration_tween = PiTweener.Tweener()
+		self.duration_tween_added = False
 		
 	def setup_modifiers(self, player, space):
 		self.player 	= player
@@ -89,15 +105,11 @@ class PowerUp(object):
 
 
 		self.mask_width = 200
+		self.orig_mask_width = self.mask_width
 		self.mask_height = 10
 
 		self.mask_x = (screen_res[0]//2)-(self.mask_width//2)
 		self.mask_y = self.bar_pos
-
-		self.float_width = self.mask_width
-		self.orig_mask_width = self.mask_width
-
-		self.decay_rate = (self.mask_width/self.duration)
 
 		###
 
@@ -197,132 +209,141 @@ class PowerUp(object):
 								  					  group 					= ordered_group_bg,
 								  					  linear_interpolation 	=	 True)
 
-		self.smooth = 0
+		self.flash = False
+
+		self.smooth = self.bar_pos
 
 		self.a = 1
-				
-	def update(self, player):
 
+	def update(self, player):
 		if player==None:
 			pass
 		else:
 			distance = sqrt((player.chassis_body.position[0] - self.position[0])**2 + (player.chassis_body.position[1] - self.position[1])**2)
 			if distance < self.activation_dist:
 				self.collected = True
-	
+
+			self.duration_tween.update()
+
 			if self.collected:
-				if self.duration >= 1:
-					#print(self.pwr_type)
-					self.do_action = True
-					self.duration -= 1
-				elif self.duration == 0:
-					self.duration -= 1 # makes duration == -1 so this only fires once
-					self.do_action = False
-					self.action_done = False
-	
-			if self.do_action:
+				## Modify the powerup.
+				## Powerup is reset within the complete func
+				## of the duration tween.
 				if self.pwr_type == 'Gravity':
 					self.space.gravity = self.grav_mod_dir
 				elif self.pwr_type == 'Boost':
 					self.player.accel_amount = self.accel_mod_amount
-				if self.mask_group.width > 0: # animate the bar and mask
-					self.float_width -= self.decay_rate
-					self.mask_group.width = int(self.float_width)
-			if not self.do_action:
-				if self.smooth >= -25:
-					self.bar_pos = -30
-					self.a = ((self.a*(20-1))+self.mask_width) / 20
-					self.mask_group.width = int(self.a)
-				else:
-					self.a = 1
-					self.mask_group.width = self.orig_mask_width
-	
-			# reset the powerup
-			if not self.action_done:
-				self.action_done = True
-				self.collected = False
-				self.duration = self.orig_dur
-				self.float_width = self.orig_mask_width # reset the mask width
-				# Reset the mods
-				if self.pwr_type == 'Gravity':
-					self.space.gravity = self.grav_finish_dir
-				elif self.pwr_type == 'Boost':
-					self.player.accel_amount = self.accel_finish_amount
-				print("Done.")
-	
+				elif self.pwr_type == 'SlowMo':
+					self.space_step_rate = self.space_step_mod
+
+				# Smoothly queue up the powerups
+				self.smooth = ((self.smooth*(20-1))+self.bar_pos) / 20
+
+				# Add the tween which modifies the duration of the powerup
+				# and width of the duration indication bar
+				if not self.duration_tween_added:
+					self.mask_width = self.orig_mask_width
+					self.duration_tween.add_tween(self,
+												  duration 				= 0,
+												  mask_width 			= 1,
+												  tween_time 			= self.orig_dur,
+												  tween_type 			= self.scale_tweener.LINEAR,
+												  on_update_function 	= self.duration_tween_update,
+												  on_complete_function 	= self.duration_tween_complete,)
+					self.duration_tween_added = True
+
+			## Remove from queue
+			if not self.collected:
+				self.do_action = False
+			#
+
+			## Animate the bar and mask.
+			self.mask_group.width 		= int(self.mask_width)
+
 			self.r_cap_f.x = self.mask_group.x+self.mask_group.width
-			self.smooth = ((self.smooth*(15-1))+self.bar_pos) / 15
 			for sprite in self.sprite_list:
-				sprite.y 				= int(self.smooth) + 2
-			self.mask_group.y 			= int(self.smooth) + 2
+				sprite.y 				= int(self.smooth) - 1
+			self.mask_group.y 			= int(self.smooth) - 1
 			self.power_label.y 			= int(self.smooth) + 16
 			self.power_label_shadow.y 	= int(self.smooth) + 15
 			self.background_sprite.y 	= int(self.smooth) + 10
-
+			# 
+			
+			## Animate the in-game sprite
 			if self.collected:
-				self.background_sprite.color = (255,255,255)
-			if self.duration <= 125 and self.duration > 100:
-				self.background_sprite.color = (255,0,0)
-			if self.duration <= 100 and self.duration > 75:
-				self.background_sprite.color = (255,255,255)
-			if self.duration <= 75 and self.duration > 50:
-				self.background_sprite.color = (255,0,0)
-			if self.duration <= 50 and self.duration > 25:
-				self.background_sprite.color = (255,255,255)
-			if self.duration <= 25:
-				self.background_sprite.color = (255,0,0)
-
-			if self.collected:
-				if not self.tween_added:
+				if not self.tween_added and not self.duration == self.orig_dur:
 					self.scale_tweener.add_tween(self,
 									 sprite_scale 			= 1,
-									 tween_time 			= 1.5,
-									 tween_type 			= self.scale_tweener.OUT_ELASTIC,
-									 on_update_function 	= self.tween_update,
-									 on_complete_function 	= self.tween_complete)
+									 tween_time 			= 1,
+									 tween_type 			= self.scale_tweener.OUT_ELASTIC,)
 					self.scale_tweener.add_tween(self,
-									 sprite_opacity 		= 0,
-									 tween_time 			= 1.5,
-									 tween_type 			= self.scale_tweener.IN_OUT_QUART,
-									 on_update_function 	= self.tween_update,
-									 on_complete_function 	= self.tween_complete)
+									 sprite_opacity 		= 50,
+									 tween_time 			= .5,
+									 tween_type 			= self.scale_tweener.IN_OUT_QUART,)
 					self.tween_added = True
-
-			if not self.collected:
+			if not self.collected and self.duration == self.orig_dur:
 				if self.tween_added:
-					self.sprite_scale = .001
+					#self.sprite_scale = .01
 					self.sprite_rotation = 0
 					self.scale_tweener.add_tween(self,
-									 			 sprite_scale 			= 0.5,
-									 			 tween_time 			= 3,
-									 			 tween_type 			= self.scale_tweener.OUT_ELASTIC,
-									 			 on_update_function 	= self.tween_update,
-									 			 on_complete_function 	= self.tween_complete)
-					self.scale_tweener.add_tween(self,
-												 sprite_rotation 		= self.sprite_grav_rotation,
-												 tween_time 			= 3,
-												 tween_type 			= self.scale_tweener.OUT_ELASTIC,
-												 on_update_function 	= self.tween_update,
-												 on_complete_function 	= self.tween_complete)
-					self.scale_tweener.add_tween(self,
-												 sprite_opacity 		= 255,
-												 tween_time 			= .5,
-												 tween_type 			= self.scale_tweener.IN_OUT_QUART,
-												 on_update_function 	= self.tween_update,
-												 on_complete_function 	= self.tween_complete)
+									 			 sprite_scale 			= .5,
+									 			 sprite_opacity 		= 255,
+									 			 tween_time 			= .5,
+									 			 tween_type 			= self.scale_tweener.IN_OUT_QUART,)
+					#self.scale_tweener.add_tween(self,
+					#							 sprite_opacity 		= 255,
+					#							 tween_time 			= self.duration,
+					#							 tween_type 			= self.scale_tweener.IN_OUT_QUART,)
 					self.tween_added = False
-				
 
 			self.scale_tweener.update()
 			self.sprite.scale 	= self.sprite_scale
 			self.sprite.opacity = self.sprite_opacity
-			if self.rot_pwr_img:
-				self.sprite.rotation = self.sprite_rotation
+			#
 
-	def tween_update(self):
-		pass
-	def tween_complete(self):
-		pass
+
+			## Flash the overlay red if we're running out of time
+			if self.duration <= 2 and not self.flash:
+				self.scale_tweener.add_tween(self,
+									 		 sprite_color_r 			= 255,
+									 		 sprite_color_g				= 1,
+									 		 sprite_color_b 			= 1,
+									 		 tween_time 				= 1,
+									 		 tween_type 				= self.scale_tweener.OUT_CUBIC)
+				self.flash = True
+
+			self.background_sprite.color = self.sprite_color_r,self.sprite_color_g,self.sprite_color_b
+			#
+
+	def duration_tween_update(self):
+		self.do_action = True
+	def duration_tween_complete(self):
+		self.collected = False
+		self.duration_tween_added = False
+		self.duration = self.orig_dur
+		self.bar_pos = -26
+		# Reset the position of the bar and width of the mask smoothly
+		self.duration_tween.add_tween(self,
+									  mask_width 			= self.orig_mask_width,
+									  smooth 				= self.bar_pos,
+									  tween_time 			= .5,
+									  tween_type 			= self.scale_tweener.IN_OUT_CUBIC,)
+		# Reset the background color to white smoothly
+		self.scale_tweener.add_tween(self,
+					 				 sprite_color_r 			= 255,
+					 				 sprite_color_g				= 255,
+					 				 sprite_color_b 			= 255,
+					 				 tween_time 				= .25,
+					 				 tween_type 				= self.scale_tweener.IN_CUBIC)
+		self.flash = False
+		# And finally reset the powerup's attributes
+		if self.pwr_type == 'Gravity':
+			self.space.gravity = self.grav_finish_dir
+		elif self.pwr_type == 'Boost':
+			self.player.accel_amount = self.accel_finish_amount
+		elif self.pwr_type == 'SlowMo':
+			self.space_step_rate = self.space_step_fin
+		print("Done.")
 	def sprite_scale_update(self):
 		pass
 	def sprite_scale_finish(self):
@@ -338,7 +359,7 @@ class PowerUpQueue(object):
 		if amount > 0:
 			for p in list_of_powerups:
 				if p==list_of_powerups[-1]:
-					p.bar_pos=12
+					p.bar_pos=8
 				else:
-					p.bar_pos=12+36*((amount-1)-i_num)
+					p.bar_pos=8+32*((amount-1)-i_num)
 				i_num+=1

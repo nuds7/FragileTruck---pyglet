@@ -26,6 +26,7 @@ import gametime
 import particles2D
 import time
 import powerup
+from tiler import BackgroundTiler
 
 class Menu(object):
 	def __init__(self, 
@@ -235,12 +236,12 @@ class Level(object):
 		self.start_Position_X   = self.mapConfig.getint("MapConfig", "Player_Start_Position_X")
 		self.start_Position_Y   = self.mapConfig.getint("MapConfig", "Player_Start_Position_Y")
 		self.start_Position     = self.start_Position_X,self.start_Position_Y
-		self.lowres             = self.mapConfig.get("MapConfig", "LowRes")
+		self.tile_size          = int(self.mapConfig.get("MapConfig", "Tile_Size"))
 		print("Name: "+self.mapName+"by "+self.mapAuthor)
 		print("Map size: "+str(self.mapWidth)+", "+str(self.mapHeight))
 		print("Player Type: "+self.playerType)
 		print("Starting Position: "+str(self.start_Position_X),str(self.start_Position_Y))
-		print("LowRes: "+str(self.lowres))
+		print("Tile size: "+str(self.tile_size))
 		################################ End Map Config
 		self.map_file = open('temp/map_layout.map')
 		self.screen_res = screen_res
@@ -354,49 +355,66 @@ class Level(object):
 
 		pyglet.resource.path.append(map_zip)
 		pyglet.resource.reindex()
-		if self.lowres == 'True':
-			self.background 		= loaders.spriteloader('images/bg.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.bg,
-															linear_interpolation=True
-															)
-			self.parallax_sprite_1  = loaders.spriteloader('images/bottom.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.pbg,
-															linear_interpolation=True
-															)
-			self.parallax_sprite_2  = loaders.spriteloader('images/middle.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.pbg2,
-															linear_interpolation=True
-															)
-			self.parallax_sprite_3  = loaders.spriteloader('images/clouds.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.pbg3,
-															linear_interpolation=True
-															)
-			self.parallax_sprite_4  = loaders.spriteloader('images/top.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.pbg4,
-															linear_interpolation=True
-															)
-			self.level_sprite       = loaders.spriteloader('images/level.png', 
-															anchor=('center','center'),
-															pos = (self.mapWidth/2,self.mapHeight/2),
-															batch=self.level_batch,
-															group=self.lbg,
-															linear_interpolation=True
-															)
+		'''
+		self.background 		= loaders.spriteloader('images/bg.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.bg,
+														linear_interpolation=hiRes
+														)
+		self.parallax_sprite_1  = loaders.spriteloader('images/bottom.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.pbg,
+														linear_interpolation=hiRes
+														)
+		self.parallax_sprite_2  = loaders.spriteloader('images/middle.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.pbg2,
+														linear_interpolation=hiRes
+														)
+		self.parallax_sprite_3  = loaders.spriteloader('images/clouds.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.pbg3,
+														linear_interpolation=hiRes
+														)
+		self.parallax_sprite_4  = loaders.spriteloader('images/top.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.pbg4,
+														linear_interpolation=hiRes
+														)
+		self.level_sprite       = loaders.spriteloader('images/level.png', 
+														anchor=('center','center'),
+														pos = (self.mapWidth/2,self.mapHeight/2),
+														batch=self.level_batch,
+														group=self.lbg,
+														linear_interpolation=hiRes
+														)
+		'''
+
+		self.bg_tiled = BackgroundTiler('images/bg.png', scale=.5, tile_size = self.tile_size)
+		self.bg_tiled.setup(self.level_batch, self.bg, (self.mapWidth,self.mapHeight))
+
+		self.bottom_tiled = BackgroundTiler('images/bottom.png', scale=.5, tile_size = self.tile_size)
+		self.bottom_tiled.setup(self.level_batch, self.pbg, (self.mapWidth,self.mapHeight))
+
+		self.middle_tiled = BackgroundTiler('images/middle.png', scale=.5, tile_size = self.tile_size)
+		self.middle_tiled.setup(self.level_batch, self.pbg2, (self.mapWidth,self.mapHeight))
+
+		#self.top_tiled = BackgroundTiler('images/top.png', scale=.5, tile_size = self.tile_size)
+		#self.top_tiled.setup(self.level_batch, self.pbg4, (self.mapWidth,self.mapHeight))
+
+		self.level_tiled = BackgroundTiler('images/level.png', scale=.5, tile_size = self.tile_size)
+		self.level_tiled.setup(self.level_batch, self.lbg, (self.mapWidth,self.mapHeight))
+
 		pyglet.resource.path.pop(-1)
 		pyglet.resource.reindex()
 
@@ -443,8 +461,8 @@ class Level(object):
 											group=self.lfg,
 											linear_interpolation=True)
 			self.time_label = pyglet.text.Label(text = '00:00:00',
-											font_name = 'Calibri', font_size = 11, bold = True,
-											x = 67, y = 5,
+											font_name = 'Calibri', font_size = 11, bold = True, italic = True,
+											x = 50, y = 5,
 											anchor_x = 'left', anchor_y = 'bottom',
 											color = (255,255,255,255),
 											batch = self.ui_batch,
@@ -452,8 +470,20 @@ class Level(object):
 
 		self.powerup_queue = powerup.PowerUpQueue()
 		self.active_powerups = []
+		self.space_step_rate = 0.015
 
-	def update(self, keys_held, target_pos, camera_pos, angle):
+	def update(self, keys_held, target_pos, camera_pos, camera_scale, angle):
+
+		self.level_tiled.pop(camera_pos, camera_scale)
+		self.bg_tiled.pop(camera_pos, camera_scale)
+		
+		self.bottom_tiled.parallax_scroll((camera_pos[0]*.25) - (self.mapWidth/2)*.25, 
+										 (camera_pos[1]*.25) - (self.mapHeight/2)*.25)
+		self.bottom_tiled.pop(camera_pos, camera_scale)
+		
+		self.middle_tiled.parallax_scroll((camera_pos[0]*.125) - (self.mapWidth/2)*.125, 
+										 (camera_pos[1]*.125) - (self.mapHeight/2)*.125)
+		self.middle_tiled.pop(camera_pos, camera_scale)
 
 		if not self.editor_mode:
 			self.time_label.text = self.gt.tick()
@@ -479,19 +509,27 @@ class Level(object):
 		for line in self.powerups:
 			line.update(self.player)
 			if line.do_action and not line.placed_in_queue:
-				line.placed_in_queue=True
+				line.placed_in_queue = True
 				self.active_powerups.append(line)
+				# Set the step rate of the powerup
+				# AKA the space's update rate
+				if self.active_powerups[-1].pwr_type == 'SlowMo':
+					self.space_step_rate = self.active_powerups[-1].space_step_rate
 
 		for p in self.active_powerups:
 			if not p.do_action:
 				p.placed_in_queue = False
 				self.active_powerups.remove(p)
+				if p.pwr_type == 'SlowMo':
+					self.space_step_rate = p.space_step_rate
+			
+		#print(self.active_powerups)
 
 		self.powerup_queue.update(self.active_powerups)
-
+		'''
 		self.parallax_sprite_1.x = (camera_pos[0]*.25) 	 	- (self.mapWidth/2)*.25	+ self.mapWidth/2
 		self.parallax_sprite_2.x = (camera_pos[0]*.125)  	- (self.mapWidth/2)*.125   + self.mapWidth/2
-		
+		'''
 		#self.parallax_sprite_1.y = (camera_pos[1]*.1)   	- (self.mapHeight/2)*.1  	+ self.mapHeight/2
 		#self.parallax_sprite_2.y = (camera_pos[1]*.05)  	- (self.mapHeight/2)*.05 	+ self.mapHeight/2
 
