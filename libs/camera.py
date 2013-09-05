@@ -22,7 +22,7 @@ class Camera(object):
 		self.newPositionX = map_size[0]//2
 		self.newPositionY = map_size[1]//2
 		self.newAngle = 0
-		self.newWeightedScale = map_size[1]/4
+		self.newWeightedScale = 0
 		self.newTarget = [0,0]
 		self.scale = map_size[1]/4
 		
@@ -95,19 +95,21 @@ class Camera(object):
 
 
 	def edge_bounce(self, dx, dy, cameraPos):
-		if cameraPos[0] < self.newWeightedScale*self.aspect:
-			self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
-			cameraPos[0] = self.newWeightedScale*self.aspect
-		if cameraPos[0] > self.map_size[0] - self.newWeightedScale*self.aspect:
-			self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
-			cameraPos[0] = self.map_size[0] - self.newWeightedScale*self.aspect
-			
-		if cameraPos[1] < self.newWeightedScale:
-			self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
-			cameraPos[1] = (self.newWeightedScale)
-		if cameraPos[1] > self.map_size[1] - self.newWeightedScale:
-			self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
-			cameraPos[1] = self.map_size[1] - self.newWeightedScale
+		if (self.scale*self.aspect)*2 < self.map_size[0]:
+			if cameraPos[0] < self.newWeightedScale*self.aspect:
+				self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
+				cameraPos[0] = self.newWeightedScale*self.aspect
+			if cameraPos[0] > self.map_size[0] - self.newWeightedScale*self.aspect:
+				self.newPositionX -= dx*((self.newWeightedScale*self.aspect)/(self.screen_size[0]/2))
+				cameraPos[0] = self.map_size[0] - self.newWeightedScale*self.aspect
+
+		if self.scale*2 < self.map_size[1]:
+			if cameraPos[1] < self.newWeightedScale:
+				self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
+				cameraPos[1] = (self.newWeightedScale)
+			if cameraPos[1] > self.map_size[1] - self.newWeightedScale:
+				self.newPositionY -= dy*((self.newWeightedScale)/(self.screen_size[1]/2))
+				cameraPos[1] = self.map_size[1] - self.newWeightedScale
 		return cameraPos
 	def zoom(self, zoom):
 		pass

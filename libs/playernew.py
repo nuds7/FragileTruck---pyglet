@@ -45,7 +45,7 @@ class Truck(object):
             self.shape_list.append(self.part)
         self.outlines = []
         for shape in self.shape_list:
-            s_points = shape.get_points()
+            s_points = shape.get_vertices()
             if len(s_points) < 4:
                 self.tri_outline = debug_batch.add_indexed(3, pyglet.gl.GL_LINES, None, [0,1,1,2,2,0], ('v2f'), ('c4B', (0,120,0,220)*3))
                 self.outlines.append(self.tri_outline)
@@ -93,42 +93,40 @@ class Truck(object):
         space.add(left_spring,left_groove,right_spring,right_groove)
         ##
         ## Sprites
+
+        plxelated = True
+
         self.truck_sprite = loaders.spriteloader('truck.png', 
                                                  anchor=('center','center'),
                                                  anchor_offset=(7,0),
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg2,
-                                                 linear_interpolation=True
-                                                 )
+                                                 linear_interpolation=plxelated)
         self.l_wheel_sprite = loaders.spriteloader('wheel.png', 
-                                                  anchor=('center','center'),
-                                                  scale = .5,
-                                                  batch=level_batch,
-                                                  group=lfg3,
-                                                  linear_interpolation=True
-                                                  )
+                                                   anchor=('center','center'),
+                                                   scale = .5,
+                                                   batch=level_batch,
+                                                   group=lfg3,
+                                                   linear_interpolation=plxelated)
         self.r_wheel_sprite = loaders.spriteloader('wheel.png', 
-                                                  anchor=('center','center'),
-                                                  scale = .5,
-                                                  batch=level_batch,
-                                                  group=lfg3,
-                                                  linear_interpolation=True
-                                                  )
+                                                   anchor=('center','center'),
+                                                   scale = .5,
+                                                   batch=level_batch,
+                                                   group=lfg3,
+                                                   linear_interpolation=plxelated)
         self.l_sus_sprite = loaders.spriteloader('suspension.png', 
                                                  anchor=('center',9),
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg,
-                                                 linear_interpolation=True
-                                                 )
+                                                 linear_interpolation=plxelated)
         self.r_sus_sprite = loaders.spriteloader('suspension.png', 
                                                  anchor=('center',9),
                                                  scale = .5,
                                                  batch=level_batch,
                                                  group=lfg,
-                                                 linear_interpolation=True
-                                                 )
+                                                 linear_interpolation=plxelated)
         ##
         self.accel_amount       = 4
         self.player_max_ang_vel = 100
@@ -137,7 +135,7 @@ class Truck(object):
     def update(self):
         iter_num = 0
         for shape in self.shape_list:
-            s_points = shape.get_points()
+            s_points = shape.get_vertices()
             verts = []
             for point in s_points:
                 verts.append(point.x)

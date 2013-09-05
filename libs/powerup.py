@@ -62,12 +62,15 @@ class PowerUp(object):
 										   pos 					= position,
 										   anchor 				= ('center','center'),
 										   scale 				= .5,
-										   linear_interpolation = True)
+										   linear_interpolation = False
+										   )
 		tex = self.sprite.image.get_texture()
 		glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 		glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
 		self.sprite.color = blend_img
+		self.blend_img = blend_img
+
 		if rot_pwr_img:
 			self.sprite.rotation = -Vec2d(grav_mod_dir).get_angle_degrees()+90
 
@@ -92,7 +95,10 @@ class PowerUp(object):
 		self.tween_added = False
 		self.duration_tween = PiTweener.Tweener()
 		self.duration_tween_added = False
-		
+
+		self.collect_sound = loaders.Audio()
+		self.collect_sound.load('resources/sounds/powerup_collected.wav')
+
 	def setup_modifiers(self, player, space):
 		self.player 	= player
 		self.space 		= space
@@ -214,8 +220,19 @@ class PowerUp(object):
 		self.smooth = self.bar_pos
 
 		self.a = 1
+		self.emitter = particles2D.Emitter(pos = self.position)
+		particle_img = pyglet.resource.image('spark.png')
+		self.factory = particles2D.powerup(.5,
+										   ((-1,1),(.1,2.5)),
+										   particle_img,
+										   color_overlay=self.blend_img,
+										   batch=level_batch,
+										   group=ordered_group3)
+		self.emitter_spurt = particles2D.Spurt(self.emitter)
 
 	def update(self, player):
+		self.emitter_spurt.update()
+
 		if player==None:
 			pass
 		else:
@@ -272,6 +289,9 @@ class PowerUp(object):
 			## Animate the in-game sprite
 			if self.collected:
 				if not self.tween_added and not self.duration == self.orig_dur:
+					self.emitter_spurt.add_factory(self.factory, .01)
+					self.collect_sound.play()
+
 					self.scale_tweener.add_tween(self,
 									 sprite_scale 			= 1,
 									 tween_time 			= 1,
@@ -290,10 +310,6 @@ class PowerUp(object):
 									 			 sprite_opacity 		= 255,
 									 			 tween_time 			= .5,
 									 			 tween_type 			= self.scale_tweener.IN_OUT_QUART,)
-					#self.scale_tweener.add_tween(self,
-					#							 sprite_opacity 		= 255,
-					#							 tween_time 			= self.duration,
-					#							 tween_type 			= self.scale_tweener.IN_OUT_QUART,)
 					self.tween_added = False
 
 			self.scale_tweener.update()
@@ -318,6 +334,9 @@ class PowerUp(object):
 	def duration_tween_update(self):
 		self.do_action = True
 	def duration_tween_complete(self):
+		################### Reset the sound #######################
+		#self.collect_sound = pyglet.media.load('resources/sounds/powerup_collected.wav')
+
 		self.collected = False
 		self.duration_tween_added = False
 		self.duration = self.orig_dur
@@ -343,7 +362,7 @@ class PowerUp(object):
 			self.player.accel_amount = self.accel_finish_amount
 		elif self.pwr_type == 'SlowMo':
 			self.space_step_rate = self.space_step_fin
-		print("Done.")
+		print(self.pwr_type,"powerup finished.")
 	def sprite_scale_update(self):
 		pass
 	def sprite_scale_finish(self):

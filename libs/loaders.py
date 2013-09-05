@@ -4,6 +4,25 @@ import zipfile
 #import pymunk
 #from pymunk import Vec2d
 
+class Audio(object):
+	def __init__(self):
+		pass
+	def load(self, audio_file):
+		self.audio_file = audio_file
+		self.sound = pyglet.media.load(audio_file)
+		# Hack that loads the sound, 
+		# plays it at zero volume, then 
+		# loads it again so there is no
+		# in-game lag when the sound is 
+		# first played.
+		self.sound.play().volume = 0
+		self.sound = pyglet.media.load(audio_file)
+		return self.sound
+	def play(self):
+		self.sound.play()
+		## Play the sound, then reset the player
+		self.sound = pyglet.media.load(self.audio_file)
+
 def spriteloader(image_file, 
 				placeholder = 'placeholder.png',
 				anchor 					= None, 

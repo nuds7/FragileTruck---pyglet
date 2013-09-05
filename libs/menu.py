@@ -12,7 +12,6 @@ from random import randrange,uniform
 import time
 import collectable
 import trigger
-import particle
 import loaders
 import glob
 import os
@@ -29,6 +28,7 @@ class State_Button:
 				 physical_padding=(0,0)):
 		#self.padding = padding
 		self.position = position
+		self.padding = padding
 		self.action = action
 		self.physical = physical
 
@@ -39,11 +39,6 @@ class State_Button:
 		press_image 	= image.get_region(0,	0,					image.width,	image.height*1//3)
 
 		self.box_size = normal_image.width+physical_padding[0], normal_image.height+physical_padding[1]
-		'''
-		normal_image 	= image.get_region(0,74,103,37)
-		hover_image 	= image.get_region(0,37,103,37)
-		press_image 	= image.get_region(0,0,103,37)
-		'''
 		self.sprite = loaders.image_sprite_loader(normal_image,
 														anchor = ('center','center'),
 														pos = position,
@@ -61,20 +56,7 @@ class State_Button:
 														linear_interpolation = True)
 		self.press_sprite.visible = False
 
-		padding_left = self.sprite.image.width//2 + padding[0]
-		padding_bottom = self.sprite.image.height//2 + padding[1]
-		padding_right = self.sprite.image.width//2 + padding[2]
-		padding_top = self.sprite.image.height//2 + padding[3]
-
-		self.left = (position[0] - padding_left, position[1] + padding_top)
-		self.bottom = (position[0] - padding_left, position[1]- padding_bottom)
-		self.right = (position[0] + padding_right, position[1]- padding_bottom)
-		self.top = (position[0] + padding_right, position[1] + padding_top)
-
-		self.bb = pymunk.BB(position[0] - padding_left, #- hinge_pos[0], # left
-							position[1] - padding_bottom, #  - hinge_pos[1], # bottom
-							position[0] + padding_right, # - hinge_pos[0], # right
-							position[1] + padding_top) # - hinge_pos[1]) # top
+		
 		alpha = 255
 		self.color = (200,0,0,alpha)
 		self.color2 = (0,200,0,alpha)
@@ -93,8 +75,26 @@ class State_Button:
 		self.pressed = False
 		
 	def setup_pyglet_batch(self, debug_batch, level_batch, ordered_group, ordered_group2, ordered_group3):
+		self.debug_batch 		= debug_batch
+		self.ordered_group3 	= ordered_group3
+
+		self.padding_left 		= self.sprite.image.width//2  + self.padding[0]
+		self.padding_bottom 	= self.sprite.image.height//2 + self.padding[1]
+		self.padding_right 		= self.sprite.image.width//2  + self.padding[2]
+		self.padding_top 		= self.sprite.image.height//2 + self.padding[3]
+
+		self.left 	= (self.position[0] - self.padding_left,  self.position[1] + self.padding_top)
+		self.bottom = (self.position[0] - self.padding_left,  self.position[1] - self.padding_bottom)
+		self.right 	= (self.position[0] + self.padding_right, self.position[1] - self.padding_bottom)
+		self.top 	= (self.position[0] + self.padding_right, self.position[1] + self.padding_top)
+
+		self.bb = pymunk.BB(self.position[0] - self.padding_left, #- hinge_pos[0], # left
+							self.position[1] - self.padding_bottom, #  - hinge_pos[1], # bottom
+							self.position[0] + self.padding_right, # - hinge_pos[0], # right
+							self.position[1] + self.padding_top) # - hinge_pos[1]) # top
+
 		self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
-		self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], 
+		self.bb_outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group3, [0,1,1,2,2,3,3,0], 
 											('v2f', (self.left[0],self.left[1],
 													 self.bottom[0],self.bottom[1],
 													 self.right[0],self.right[1],
@@ -113,6 +113,7 @@ class State_Button:
 		self.bb_outline.colors = (self.color*4)
 		if self.bb.contains_vect(mouse_pos):
 			if button == 1:
+				print('honk')
 				self.bb_outline.colors = (self.color3*4)
 				self.press_sprite.visible = True
 				self.sprite.visible = False
@@ -126,6 +127,8 @@ class State_Button:
 
 	def release(self, mouse_pos, button, camera_pos):
 		if self.bb.contains_vect(mouse_pos):
+			self.hover_sprite.visible = True
+			self.press_sprite.visible = False
 			if button == 1:
 				if self.pressed:
 					self.do_action = True
@@ -142,7 +145,7 @@ class State_Button:
 				self.camera_move = False
 
 		if self.do_action and self.action == 'exit':
-				print('Button action: %s. Purging temp folder and exiting.' % (self.action))
+				print('Button action: %s. Purseging temp folder and exiting.' % (self.action))
 				shutil.rmtree('temp')
 				pyglet.app.exit()
 				self.do_action = False
@@ -153,6 +156,8 @@ class State_Button:
 			self.bb_outline.colors = (self.color2*4)
 			self.sprite.visible = False
 			self.hover_sprite.visible = True
+			if self.pressed:
+				self.press_sprite.visible = False
 		elif not self.bb.contains_vect(mouse_pos): 
 			self.sprite.visible = True
 			self.press_sprite.visible = False
@@ -165,6 +170,28 @@ class State_Button:
 			shape = pymunk.Poly.create_box(body, self.box_size)
 			shape.friction = .1
 			space.add(shape)
+
+	def scroll(self, y):
+		self.sprite.y 		= self.sprite.y      	+ y
+		self.hover_sprite.y = self.hover_sprite.y 	+ y
+		self.press_sprite.y = self.press_sprite.y 	+ y
+
+	def update_bb(self):
+		self.bb = pymunk.BB(self.sprite.x - self.padding_left,
+							self.sprite.y - self.padding_bottom,
+							self.sprite.x + self.padding_right,
+							self.sprite.y + self.padding_top)
+
+		self.left 	= (self.sprite.x - self.padding_left,  self.sprite.y + self.padding_top)
+		self.bottom = (self.sprite.x - self.padding_left,  self.sprite.y - self.padding_bottom)
+		self.right 	= (self.sprite.x + self.padding_right, self.sprite.y - self.padding_bottom)
+		self.top 	= (self.sprite.x + self.padding_right, self.sprite.y + self.padding_top)
+
+		self.bb_outline.vertices = (self.left[0],self.left[1],
+									self.bottom[0],self.bottom[1],
+									self.right[0],self.right[1],
+									self.top[0],self.top[1])
+
 
 class Scrollable_Button:
 	def __init__(self, 

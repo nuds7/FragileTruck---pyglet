@@ -6,7 +6,6 @@ import math
 import levelassembler
 import camera
 from math import sin,cos
-import particle
 import particles2D
 import loaders
 import PiTweener
@@ -200,6 +199,8 @@ class Finish:
         self.weighted_angle = 0
         self.tweener = PiTweener.Tweener()
 
+        self.finish_sound = loaders.Audio()
+        self.finish_sound.load('resources/sounds/yay.ogg')
 
     def setup_pyglet_batch(self, debug_batch, level_batch, ui_batch, ordered_group, screen_res):
         self.outline = debug_batch.add_indexed(4, pyglet.gl.GL_LINES, ordered_group, [0,1,1,2,2,3,3,0], ('v2f'), ('c3B', (0,0,0)*4))
@@ -215,45 +216,27 @@ class Finish:
         self.sprite.set_position(screen_res[0]//2,screen_res[1]//2)
         self.sprite.batch = ui_batch
         self.sprite.group = ordered_group
-
-        self.emitters = []
-        img = pyglet.resource.image('confetti.png')
-        left_emitter    = particles2D.Emitter(pos=(0,0), 
-                                              max_num = 50)
-        left_emitter.add_factory(particles2D.confetti_machine(60,
-                                                              ((1,6),(3,8)),
-                                                              img,
-                                                              batch=ui_batch,
-                                                              group=None),
-                                                              pre_fill = 0)
-        right_emitter   = particles2D.Emitter(pos=(screen_res[0],0), 
-                                              max_num = 50)
-        right_emitter.add_factory(particles2D.confetti_machine(60,
-                                                              ((-1,-6),(3,8)),
-                                                              img,
-                                                              batch=ui_batch,
-                                                              group=None),
-                                                              pre_fill = 0)
-        self.emitters.append(left_emitter)
-        self.emitters.append(right_emitter)
-
-        self.sprite_scale = .5
+        
+        self.sprite_scale = .8
         self.sprite_opacity = 0
         self.added_tween = False
+
+
+        self.fade_sprite_out = False
+        self.wait_a_sec = 30
+
+        self.emitter = particles2D.Emitter(pos = (screen_res[0]//2,-50))
+        particle_img = pyglet.resource.image('confetti.png')
+        self.factory = particles2D.finish_confetti(5,
+                                                   ((-2,3),(5,7)),
+                                                   particle_img,
+                                                   batch=ui_batch,
+                                                   group=ordered_group)
+
+        self.emitter_spurt = particles2D.Spurt(self.emitter)
+
     def update(self, player_pos, angle):
-        if self.particle_emit:
-            for e in self.emitters: 
-                e.update()
-                e.draw()
-        #x = 23*cos(angle+math.radians(90)) + player_pos[0]
-        #y = 23*sin(angle+math.radians(90)) + player_pos[1]
-
-        #self.weighted_angle = ((self.weighted_angle*(5-1))+angle) / 5
-        
-        #self.sprite.rotation = math.degrees(-self.weighted_angle)
-
-        #self.emitter_L.update()
-        #self.emitter_R.update()
+        self.emitter_spurt.update()
 
         if not self.bb.contains_vect(player_pos):
             self.bb_outline.colors = (self.color*4)
@@ -262,26 +245,32 @@ class Finish:
 
         if self.bb.contains_vect(player_pos):
             self.particle_emit = True
-            #self.fangle = 0
             self.bb_outline.colors = (self.color2*4)
-            #self.sprite.rotation = math.degrees(0)
             if not self.added_tween:
-                self.added_tweens = True
+                self.emitter_spurt.add_factory(self.factory, .001)
+
+                self.finish_sound.play()
+                
+                self.added_tween = True
                 self.tweener.add_tween(self,
                                        sprite_scale          = 1,
                                        sprite_opacity        = 255,
                                        tween_time            = 1,
                                        tween_type            = self.tweener.OUT_CUBIC,
-                                       #on_update_function   =
-                                       #on_complete_function =
-                                       )
+                                       on_complete_function  = self.fade_out)
+
+        if self.fade_sprite_out:
+            if self.wait_a_sec > -1:
+                self.wait_a_sec -= 1
+            if self.wait_a_sec == 0:
+                self.tweener.add_tween(self,
+                                       sprite_scale          = 1.25,
+                                       sprite_opacity        = 0,
+                                       tween_time            = .5,
+                                       tween_type            = self.tweener.OUT_CUBIC,)
 
         self.sprite.scale = self.sprite_scale
         self.sprite.opacity = self.sprite_opacity
 
-        
-
-            #print(self.sprite.scale)
-
-
-#level_res = ['levels/'+l for l in os.listdir('levels/') if l.endswith('.zip')]
+    def fade_out(self):
+        self.fade_sprite_out = True

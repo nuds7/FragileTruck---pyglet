@@ -4,7 +4,7 @@ from pyglet.gl import *
 from math import sqrt
 
 class BackgroundTiler(object):
-	def __init__(self, image, scale=1, tile_size = 256):
+	def __init__(self, image, x=0, y=0, scale = 1, tile_size = 1024):
 		self.scale = scale
 		self.tile_size = tile_size
 		try:
@@ -30,8 +30,8 @@ class BackgroundTiler(object):
 			for w in range(w_tile):
 				self.tile_positions.append(
 										  (
-										  (tile_size*(w)*scale), ## visible seams +w, +h
-										  (tile_size*(h)*scale)
+										  (tile_size*(w)*scale)+x, ## visible seams +w, +h
+										  (tile_size*(h)*scale)+y
 										  )
 										  )
 				#print(self.tile_positions)
@@ -45,8 +45,11 @@ class BackgroundTiler(object):
 			sprite = pyglet.sprite.Sprite(t)
 			self.sprite_tiles.append(sprite)
 
+		self.x = 0
+		self.y = 0
+
 		
-	def setup(self, batch, group, map_size):
+	def setup(self, batch, group, map_size, debug_batch=None):
 		self.map_size = map_size
 		i_num = 0
 		for s in self.sprite_tiles:
@@ -57,17 +60,21 @@ class BackgroundTiler(object):
 			s.y = self.tile_positions[i_num][1] + map_size[1]//2 - self.height//4
 			i_num += 1
 
+		self.debug_batch = debug_batch
+
 	def parallax_scroll(self, x, y):
-		i_num = 0
-		for s in self.sprite_tiles:
-			s.x = self.tile_positions[i_num][0] + self.map_size[0]//2 - self.width//4 + x + 4
-			s.y = self.tile_positions[i_num][1] + self.map_size[1]//2 - self.height//4 + y
-			i_num += 1
+		pass
+		#i_num = 0
+		#for s in self.sprite_tiles:
+		#	s.x = self.tile_positions[i_num][0] + self.map_size[0]//2 - self.width//4 + x
+		#	s.y = self.tile_positions[i_num][1] + self.map_size[1]//2 - self.height//4 + y
+		#	i_num += 1
 
 	def pop(self, camera_pos, camera_scale):
-		for s in self.sprite_tiles:
-			distance = abs(sqrt((s.x-camera_pos[0]+self.tile_size//4)**2+(s.y-camera_pos[1]+self.tile_size//4)**2))
-			if distance > camera_scale*2 + 150: # +150
-				s.visible = False
-			else:
-				s.visible = True
+		pass
+		#for s in self.sprite_tiles:
+		#	distance = abs(sqrt((s.x-camera_pos[0]+self.tile_size//4)**2+(s.y-camera_pos[1]+self.tile_size//4)**2))
+		#	if distance > camera_scale*2 + self.tile_size//4: # +150
+		#		s.visible = False
+		#	else:
+		#		s.visible = True

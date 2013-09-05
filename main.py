@@ -1,20 +1,17 @@
 import os, sys
-os.putenv('PYGLET_SHADOW_WINDOW', '0')
 import pyglet
 from pyglet.gl import *
 lib_path = os.path.abspath('libs/')
 sys.path.append(lib_path)
 import scene
-import time
-import ui
 pyglet.resource.path = ['resources',
 						'resources/images',
 						'resources/images/tips',
-						'resources/menu/images',
-						'resources/temp',
-						'resources/temp/images',
-						'resources/temp/images/tips']
+						'resources/menu/images',]
 pyglet.resource.reindex()
+
+print("AVBin: "+str(pyglet.media.have_avbin))
+
 
 
 class Window(pyglet.window.Window):
@@ -79,5 +76,7 @@ class Window(pyglet.window.Window):
 		self.manager.scene.on_mouse_motion(x, y, dx, dy, worldMouse)
 	
 if __name__ == '__main__':
-	window = Window(960, 540, caption = 'FragileTruck', fullscreen = False) # 960, 540
+	window = Window(1280, 720, 						# 960, 540
+					caption 	= 'FragileTruck', 
+					fullscreen 	= False) 
 	pyglet.app.run()

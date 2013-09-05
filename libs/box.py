@@ -46,8 +46,7 @@ class Boxes:
 										  #size = size,
 										  scale = scale,
 										  anchor = ('center','center'),
-										  linear_interpolation = True
-										  )
+										  linear_interpolation = True)
 			self.sprites.append(sprite)
 		self.point_query = point_query
 		self.mouse_pos = [0,0]
@@ -87,13 +86,14 @@ class Boxes:
 			sprite.batch = level_batch
 			sprite.group = ordered_group
 
+
 	def draw(self):
-		
 		iterNum = 0
 		for s in self.sprites:
 			s.set_position(self.body_list[iterNum].position[0], self.body_list[iterNum].position[1])
 			s.rotation = math.degrees(-self.body_list[iterNum].angle)
 			iterNum += 1
+
 		if self.point_query:
 			for shape in self.shape_list:
 				if shape.point_query(self.mouse_pos):
@@ -108,7 +108,7 @@ class Boxes:
 					self.contains = False
 		iterNum = 0
 		for bp in self.outlineList:
-			self.pPoints = self.shape_list[iterNum].get_points()
+			self.pPoints = self.shape_list[iterNum].get_vertices()
 			self.p_list = []
 			for point in self.pPoints:
 				self.p_list.append(point.x)

@@ -14,7 +14,6 @@ import levelassembler
 import levelbuilder
 import box
 import bridge
-import particle
 import box
 import mobi
 import collectable
@@ -28,16 +27,12 @@ import time
 import ui
 from box import Boxes
 from random import randrange,uniform
-import pyglet_util
+from pymunk import pyglet_util
 pyglet.resource.path = ['resources',
 						'resources/images', 
 						'resources/images/tips', 
 						'resources/images/dkcopy',
-						'resources/menu/images',
-						'levels/previews',
-						'resources/temp',
-						'resources/temp/images', 
-						'resources/temp/images/tips']
+						'resources/menu/images',]
 pyglet.resource.reindex()
 
 def clear_space(space):
@@ -94,7 +89,7 @@ class Editor_Scene(Scene):
 		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
-		self.space.enablne_contact_graph 	= True
+		#self.space.enablne_contact_graph 	= True
 		self.space.gravity 					= (0,-800)
 
 		glEnable(GL_BLEND)
@@ -171,12 +166,14 @@ class Editor_Scene(Scene):
 		self.builder.update()
 		if self.mode == "Segment":
 			self.count = len(self.builder.segments_to_add)/2
-			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)+" | Position: "+str(self.drag_info)
+			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)+ \
+								   " | Distance: "+"%.2f" % self.builder.guide_distance
 		if self.mode == "Collectable":
 			self.count = len(self.builder.collectables_to_add)
 			self.mode_label.text = "Mode: "+self.mode.upper()+" | Ammount: "+str(self.count)
 		if self.mode == "None":
-			self.mode_label.text = 'No editing mode selected. Press 1-2 to select a mode. Ctrl+Z to undo the last action in that mode. Ctrl+S to save.'
+			self.mode_label.text = 'R to reset the camera. Press 1-2 to select a mode. '+\
+								   'Ctrl+Z to undo the last action in that mode. Ctrl+S to save.'
 
 	def world_pos(self, x, y):
 		wX = (self.camera.newPositionX - (self.camera.newWeightedScale*self.aspect)) \
@@ -237,7 +234,7 @@ class Editor_Scene(Scene):
 		if self.mode == 'Segment':
 			self.builder.add_segment(button, world_mouse)
 	def on_mouse_motion(self, x, y, dx, dy, world_mouse):
-		self.info_label.text = "Current position: ("+"%.3f"%world_mouse[0]+", "+"%.3f"%world_mouse[1]+")"
+		self.info_label.text = "Position: ("+"%.3f"%world_mouse[0]+", "+"%.3f"%world_mouse[1]+")"
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
 		if self.camera.scale < self.screen_res[1]:
 			if scroll_y < 0:
@@ -274,7 +271,7 @@ class Game_Scene(Scene):
 		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
-		self.space.enablne_contact_graph 	= True
+		#self.space.enablne_contact_graph 	= True
 		self.space.gravity 					= (0,-800)
 
 		glEnable(GL_BLEND)
@@ -311,8 +308,6 @@ class Game_Scene(Scene):
 		self.debug = False
 		self.weighted_cam = Vec2d(0,0)
 
-		#self.pymunk_debug = pyglet_util.draw(self.space, batch = self.debug_batch)
-
 	def update(self, keys_held):
 
 		self.space.step(self.level.space_step_rate)
@@ -336,7 +331,7 @@ class Game_Scene(Scene):
 		else:
 			self.level_batch.draw()
 			self.debug_batch.draw()
-			pyglet_util.draw(self.space)
+			#pyglet_util.draw(self.space)
 			
 		self.camera.hud_mode()
 		self.ui_batch.draw()
@@ -376,6 +371,7 @@ class Game_Scene(Scene):
 	def on_mouse_motion(self, x, y, dx, dy, world_mouse):
 		pass
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+		## Restricted Zoom
 		if self.camera.scale < self.level.mapHeight//2 and \
 					self.camera.scale < (self.level.mapWidth//2) / self.aspect:
 			if scroll_y < 0:
@@ -383,6 +379,13 @@ class Game_Scene(Scene):
 		if self.camera.scale >= self.screen_res[1]/4:
 			if scroll_y > 0:
 				self.camera_zoom -= 20*abs(scroll_y)
+		
+		'''## Free Zoom
+		if scroll_y < 0:
+				self.camera_zoom += 20*abs(scroll_y)
+		if scroll_y > 0:
+				self.camera_zoom -= 20*abs(scroll_y)
+		'''
 
 class Menu_Scene(Scene):
 	def __init__(self, 
@@ -408,11 +411,11 @@ class Menu_Scene(Scene):
 		self.bg 				= pyglet.graphics.OrderedGroup(2, parent=common_group)
 
 		self.space 							= pymunk.Space()
-		self.space.enablne_contact_graph 	= True
+		#self.space.enablne_contact_graph 	= True
 		self.space.gravity 					= (0,-800)
-		self.screen_res = screen_res
-		self.aspect = screen_res[0]/screen_res[1]
 
+		self.screen_res = screen_res
+		self.aspect 	= screen_res[0]/screen_res[1]
 
 		self.menu = levelassembler.Menu(map_zip,
 										self.space,
@@ -446,7 +449,20 @@ class Menu_Scene(Scene):
 		self.debug = False
 		self.level_selected = ''
 		self.keys_held = []
+
+		self.scrollable_menu = ui.ScrollMenu((screen_res[0]//2), 
+											 (screen_res[1]//2), 
+											 (252), 
+											 (364),
+											 [
+											 'anus','anus','anus','anud','anus','anus',
+											 'anus','anus','anus','anus','anus','anus',
+											 ],
+											 common_group)
+		self.scrollable_menu.setup_batch(self.debug_batch, self.ui_batch)
+
 	def update(self, keys_held):
+		self.scrollable_menu.update()
 
 		self.keys_held = keys_held
 		self.space.step(0.015)
@@ -492,16 +508,19 @@ class Menu_Scene(Scene):
 		if symbol == pyglet.window.key.T:
 			self.camera_zoom = self.screen_res[1]/2
 	def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-		
-		if self.camera.scale < self.menu.mapHeight//2 and \
-					self.camera.scale < (self.menu.mapWidth//2) / self.aspect:
-			if scroll_y < 0:
-				self.camera_zoom += 30*abs(scroll_y)
-		if self.camera.scale > 100:
-			if scroll_y > 0:
-				self.camera_zoom -= 30*abs(scroll_y)
+		self.scrollable_menu.scroll(scroll_y)
+		pass
+		#if self.camera.scale < self.menu.mapHeight//2 and \
+		#			self.camera.scale < (self.menu.mapWidth//2) / self.aspect:
+		#	if scroll_y < 0:
+		#		self.camera_zoom += 30*abs(scroll_y)
+		#if self.camera.scale > 100:
+		#	if scroll_y > 0:
+		#		self.camera_zoom -= 30*abs(scroll_y)
 		
 	def on_mouse_press(self, x, y, button, modifiers, world_mouse):
+		self.scrollable_menu.button_press((x,y), button)
+
 		for b in self.menu.buttons:
 			b.press(world_mouse, button)
 
@@ -519,7 +538,9 @@ class Menu_Scene(Scene):
 										'levels/'+box.name, 
 										self.screen_res))
 	def on_mouse_release(self, x, y, button, modifiers, world_mouse):
-		if button == 2:
+		self.scrollable_menu.button_release((x,y), button)
+		
+		if button == 1:
 			for box in self.menu.level_boxes:
 				box.mouse_grab_release()
 
@@ -538,10 +559,13 @@ class Menu_Scene(Scene):
 			for box in self.menu.level_boxes:
 				box.mouse_grab_drag(world_mouse)
 	def on_mouse_motion(self, x, y, dx, dy, world_mouse):
+		self.scrollable_menu.button_hover((x,y))
+
 		for button in self.menu.buttons:
 			button.hover(world_mouse)
 		for box in self.menu.level_boxes:
 			box.mouse_pos = world_mouse
+			
 class SceneManager(object):
 	def __init__(self, 
 				map_zip, 

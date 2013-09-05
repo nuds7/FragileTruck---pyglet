@@ -2,6 +2,7 @@ import pymunk
 import pyglet
 from pyglet.gl import *
 from datetime import datetime
+from math import sqrt
 
 def pairs(l,n):
 	return zip(*[l[i::n] for i in range(n)])
@@ -48,6 +49,8 @@ class LevelBuilder:
 
 		print("Builder started.")
 
+		self.guide_distance = 0
+
 	def write_to_file(self, symbol, modifiers):
 		if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.S:
 			map_file = open("leveleditoroutput.txt", "a")
@@ -89,8 +92,7 @@ class LevelBuilder:
 				if len(self.segments_to_add) > 1:
 					print("Removed physical",	 str(self.segments_to_add.pop()),str(self.segments_to_add.pop()))
 					print("Removed draw points", str(self.segment_points.pop()),str(self.segment_points.pop()),
-						   						 str(self.segment_points.pop()),str(self.segment_points.pop())
-						   						 )
+						   						 str(self.segment_points.pop()),str(self.segment_points.pop()))
 					self.guide_line_draw.vertices = [0,0,0,0]
 
 		if mode == 'Collectable':
@@ -137,6 +139,7 @@ class LevelBuilder:
 
 	def guide(self, buttons, world_mouse_pos):
 		self.guide_line_draw.vertices = [self.clicked_pos[0],self.clicked_pos[1],world_mouse_pos[0],world_mouse_pos[1]]
+		self.guide_distance = sqrt((self.clicked_pos[0] - world_mouse_pos[0])**2 + (self.clicked_pos[1] - world_mouse_pos[1])**2)
 
 class CreateBridge:
 	def __init__(self, debug_batch, ordered_group, ordered_group2, ordered_group3):

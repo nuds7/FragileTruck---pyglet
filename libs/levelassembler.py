@@ -13,7 +13,6 @@ from box import Boxes
 import time
 import collectable
 import trigger
-import particle
 import loaders
 import camera
 import os,sys,shutil
@@ -23,10 +22,10 @@ from menu import State_Button
 import math
 from math import sin,cos
 import gametime
-import particles2D
 import time
 import powerup
 from tiler import BackgroundTiler
+import phxParticles
 
 class Menu(object):
 	def __init__(self, 
@@ -132,6 +131,7 @@ class Menu(object):
 										('v2f/static', (p1[0],p1[1],p2[0],p2[1])),
 										('c3B/static', (125,10,160,200,20,60)))
 
+
 		levels = [l for l in os.listdir('levels/') if l.endswith('.zip')]
 		self.level_boxes = []
 		iter_num = 0
@@ -146,9 +146,21 @@ class Menu(object):
 							  scale = 1,
 							  point_query = True,
 							  name = level)
+
 			self.level_boxes.append(level_box)
 			pyglet.resource.path.pop(-1)
 			iter_num += 1
+
+		self.box_labels = []
+		for level in levels:
+			level_label = pyglet.text.Label(text = level,
+											font_name = 'Calibri', font_size = 12, bold = True,
+											x = 0, y = 0, 
+											anchor_x = 'center', anchor_y = 'center',
+											color = (255,255,255,255),
+											batch = self.level_batch,
+											group = self.lfg3)
+			self.box_labels.append(level_label)
 
 		for line in self.buttons:
 			line.setup_pyglet_batch(self.debug_batch, self.level_batch, self.lfg, self.lfg2, self.lfg3)
@@ -156,32 +168,21 @@ class Menu(object):
 			box.setup_pyglet_batch(self.debug_batch, self.level_batch, self.lfg, ordered_group2 = self.lfg2)
 
 		pyglet.resource.reindex()
-
-		self.emitter = particles2D.Emitter(pos=(self.screen_res[0]*2/3,self.mapHeight/2), 
-										   max_num = 200)
-		img = pyglet.resource.image('spark.png')
-
-		self.emitter.add_factory(particles2D.spark_machine(580,
-			                                               img,
-			                                               batch=self.level_batch,
-			                                               group=self.bg),
-														   pre_fill = 100)
-
 		
 		pyglet.resource.path.pop(-1)
 		pyglet.resource.reindex()
 
 		self.level_selected = ''
-		
 
 	def update(self):
-		#self.st.update()
-
+		i_num = 0
 		for box in self.level_boxes:
 			box.draw()
-
-		self.emitter.update()
-		self.emitter.draw()
+			self.box_labels[i_num].begin_update()
+			self.box_labels[i_num].x = box.body.position[0]
+			self.box_labels[i_num].y = box.body.position[1]
+			self.box_labels[i_num].end_update()
+			i_num += 1
 
 
 class Level(object):
@@ -355,50 +356,6 @@ class Level(object):
 
 		pyglet.resource.path.append(map_zip)
 		pyglet.resource.reindex()
-		'''
-		self.background 		= loaders.spriteloader('images/bg.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.bg,
-														linear_interpolation=hiRes
-														)
-		self.parallax_sprite_1  = loaders.spriteloader('images/bottom.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.pbg,
-														linear_interpolation=hiRes
-														)
-		self.parallax_sprite_2  = loaders.spriteloader('images/middle.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.pbg2,
-														linear_interpolation=hiRes
-														)
-		self.parallax_sprite_3  = loaders.spriteloader('images/clouds.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),#pos = (0,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.pbg3,
-														linear_interpolation=hiRes
-														)
-		self.parallax_sprite_4  = loaders.spriteloader('images/top.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.pbg4,
-														linear_interpolation=hiRes
-														)
-		self.level_sprite       = loaders.spriteloader('images/level.png', 
-														anchor=('center','center'),
-														pos = (self.mapWidth/2,self.mapHeight/2),
-														batch=self.level_batch,
-														group=self.lbg,
-														linear_interpolation=hiRes
-														)
-		'''
 
 		self.bg_tiled = BackgroundTiler('images/bg.png', scale=.5, tile_size = self.tile_size)
 		self.bg_tiled.setup(self.level_batch, self.bg, (self.mapWidth,self.mapHeight))
@@ -478,11 +435,11 @@ class Level(object):
 		self.bg_tiled.pop(camera_pos, camera_scale)
 		
 		self.bottom_tiled.parallax_scroll((camera_pos[0]*.25) - (self.mapWidth/2)*.25, 
-										 (camera_pos[1]*.25) - (self.mapHeight/2)*.25)
+										 (camera_pos[1]* .1) - (self.mapHeight/2)*.1)
 		self.bottom_tiled.pop(camera_pos, camera_scale)
 		
 		self.middle_tiled.parallax_scroll((camera_pos[0]*.125) - (self.mapWidth/2)*.125, 
-										 (camera_pos[1]*.125) - (self.mapHeight/2)*.125)
+										 (camera_pos[1]* .05) - (self.mapHeight/2)*.05)
 		self.middle_tiled.pop(camera_pos, camera_scale)
 
 		if not self.editor_mode:
